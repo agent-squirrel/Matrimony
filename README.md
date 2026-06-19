@@ -5,43 +5,34 @@
 
 # Your very own wedding website!
 
-Flask-based wedding website, with configuration-driven content, optional site password protection, a time-locked photo challenge and gallery, and a two-stage save-the-date / RSVP workflow.
+A beautiful, easy-to-deploy wedding website for you and your partner. Guests can save the date, confirm their RSVP, and take part in a wedding-day photo challenge - all managed through a simple admin panel.
+## Screenshots
+
+| Home | Details |
+|------|---------|
+| ![Home page](docs/screenshots/home.png) | ![Details page](docs/screenshots/details.png) |
+
+| Photo Challenge | Gallery |
+|-----------------|---------|
+| ![Photo challenge](docs/screenshots/photo-challenge.png) | ![Gallery](docs/screenshots/gallery.png) |
+
+| Admin Dashboard | Wedding Settings |
+|-----------------|-----------------|
+| ![Admin dashboard](docs/screenshots/admin-dashboard.png) | ![Wedding settings](docs/screenshots/admin-wedding.png) |
 
 ## Features
 
-- **Wedding website pages** for the home page, details, and live stream
-- **Optional site password protection** for guest-facing pages
-- **Time-locked photo challenge** that unlocks on the wedding day
-- **Photo gallery** backed by MySQL and filesystem uploads
-- **Save the Date flow** that collects guest mailing details
-- **Personalized RSVP confirmation links** using unique guest codes
-- **Admin RSVP dashboard** with CSV export and printable QR code pages
-- **Email notifications** for new submissions and RSVP confirmations
+- **Wedding pages** for home, details, and live stream
+- **Simple admin panel** to manage all your wedding settings
+- **Save the Date** form to collect guest contact details before the big day
+- **Personalised RSVP links** - each guest gets a unique QR code for one-click confirmation
+- **Time-locked photo challenge** that unlocks automatically on your wedding day
+- **Photo gallery** of guest-submitted challenge photos, downloadable as a ZIP
+- **Email notifications** when guests save the date or confirm their RSVP
+- **Customisable themes** - choose from classic, editorial, minimal, romantic, or luxe layouts, with full colour control
+- Optional **site password** to keep guest pages private until you're ready to share
 
-## Tech Stack
-
-- **Backend:** Flask, Flask-Mail, Flask-SQLAlchemy
-- **Database:** MariaDB/MySQL via PyMySQL
-- **Frontend:** Jinja2 templates, custom CSS, vanilla JavaScript
-- **Other integrations:** QR code generation with `qrcode`
-
-## Main Routes
-
-| Route | Purpose |
-| --- | --- |
-| `/` | Home page |
-| `/details` | Wedding details |
-| `/stream` | Twitch live stream page |
-| `/photo-challenge` | Wedding-day photo challenge |
-| `/gallery` | Submitted photo gallery |
-| `/save` | Save the Date form |
-| `/rsvp/confirm/<code>` | Guest RSVP confirmation page |
-| `/rsvp/admin/login` | RSVP admin login |
-| `/rsvp/admin` | RSVP dashboard |
-| `/rsvp/admin/export` | CSV export |
-| `/rsvp/admin/qr-codes` | Printable guest QR codes |
-
-## Setup
+## Getting Started
 
 ### 1. Create a virtual environment
 
@@ -62,16 +53,10 @@ pip install -r requirements.txt
 cp config.example.yml config.yml
 ```
 
-Update `config.yml` with:
+Open `config.yml` and fill in two things:
 
-- `flask.secret_key`
-- `database.*`
-- `mail.*`
-- `wedding.*`
-- `details.*`
-- `twitch.*`
-- `site_protection.*`
-- `photo_challenges`
+- A **secret key** for secure sessions (any long random string)
+- Your **database connection** details (host, user, password, database name)
 
 ### 4. Set up the database
 
@@ -85,30 +70,24 @@ python setup_database.py
 python app.py
 ```
 
-The development server listens on `http://localhost:5000`.
+Open `http://localhost:5000` in your browser. On first run you'll be walked through a short setup wizard to create your admin account and enter your initial wedding details.
 
-## Configuration Notes
+## Admin Panel
 
-- `config.yml` is the source of truth for wedding content, mail settings, database credentials, stream settings, and photo challenges.
-- `site_protection.enabled` controls whether guest-facing routes require the shared site password.
-- `wedding.date_full` controls when the photo challenge and gallery unlock.
-- Uploaded photos are stored in `static/uploads/photos/`.
+Once you're logged in at `/admin` you can manage everything from the browser:
 
-## Save the Date and RSVP Flow
+- **Wedding details** - couple names, date & time, venue info, registry links, Twitch stream
+- **Theme & colours** - 5 layout styles and full colour customisation
+- **Photo challenges** - add, edit, or remove challenges for your guests
+- **Guest list** - view RSVPs, import/export CSV
+- **Photo gallery** - browse and download everything guests submitted
+- **Site settings** - password protection and email (SMTP) configuration
 
-1. Guests submit their details at `/save`.
-2. The app stores their record in `rsvp_submissions` and generates a unique code.
-3. Admins manage entries through `/rsvp/admin`.
-4. Guests later confirm attendance via `/rsvp/confirm/<code>`.
-5. Admins can export data to CSV or print guest QR codes from the dashboard.
+## Tech Stack
 
-## Email Behavior
-
-The app can send:
-
-- notification emails when a guest submits the Save the Date form
-- notification emails when a guest confirms their RSVP
-- confirmation emails back to guests after RSVP confirmation
+- **Backend:** Flask, Flask-Mail, Flask-SQLAlchemy
+- **Database:** MariaDB/MySQL
+- **Frontend:** Jinja2 templates, custom CSS, vanilla JavaScript
 
 ## Production
 
@@ -118,18 +97,6 @@ Run with Gunicorn:
 gunicorn -w 4 -b 0.0.0.0:8000 app:app
 ```
 
-## Project Structure
-
-```text
-app.py
-config.example.yml
-config.yml
-setup_database.py
-migrate_rsvp_table.py
-templates/
-static/
-```
-
-# AI Disclaimer
+## AI Disclaimer
 Development of this site made heavy use of AI (Claude Sonnet 4.6) to take it from a custom and highly specific site for myself and my wife to something generic enough for anyone to use.
 The original site had no admin panel and was driven purely by database entries and YAML config files.
