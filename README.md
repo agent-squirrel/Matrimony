@@ -6,6 +6,7 @@
 # Your very own wedding website!
 
 A beautiful, easy-to-deploy wedding website for you and your partner. Guests can save the date, confirm their RSVP, and take part in a wedding-day photo challenge - all managed through a simple admin panel.
+
 ## Screenshots
 
 | Home | Details |
