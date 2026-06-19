@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="matrimony-logo-light.svg">
+  <img src="matrimony-logo.svg" alt="matrimony" width="440" height="120">
+</picture>
+
 # Your very own wedding website!
 
 Flask-based wedding website, with configuration-driven content, optional site password protection, a time-locked photo challenge and gallery, and a two-stage save-the-date / RSVP workflow.
