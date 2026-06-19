@@ -9,8 +9,7 @@
     {% set _ftype = {'ico': 'image/x-icon', 'png': 'image/png', 'svg': 'image/svg+xml', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg'}.get(_fext, 'image/png') %}
     <link rel="icon" type="{{ _ftype }}" href="{{ url_for('static', filename='uploads/favicon/' + wedding_config.favicon_filename) }}?v={{ wedding_config.updated_at.timestamp()|int if wedding_config.updated_at else 1 }}">
     {% else %}
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥂</text></svg>">
-    {% endif %}
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 120%22><circle cx=%2244%22 cy=%2260%22 r=%2232%22 fill=%22none%22 stroke=%22%239C5B5B%22 stroke-width=%229%22/><circle cx=%2276%22 cy=%2260%22 r=%2232%22 fill=%22none%22 stroke=%22%233F3631%22 stroke-width=%229%22/></svg>">    {% endif %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
