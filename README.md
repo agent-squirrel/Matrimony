@@ -124,3 +124,7 @@ migrate_rsvp_table.py
 templates/
 static/
 ```
+
+# AI Disclaimer
+Development of this site made heavy use of AI (Claude Sonnet 4.6) to take it from a custom and highly specific site for myself and my wife to something generic enough for anyone to use.
+The original site had no admin panel and was driven purely by database entries and YAML config files.
