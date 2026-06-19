@@ -504,8 +504,10 @@ body {
 
 .form-group textarea { resize: vertical; min-height: 90px; }
 
-.form-group input[type="checkbox"] {
+.form-group input[type="checkbox"],
+.form-group input[type="radio"] {
     width: 16px; height: 16px;
+    flex: none;
     accent-color: var(--admin-accent);
     cursor: pointer;
 }

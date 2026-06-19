@@ -1,6 +1,6 @@
-# Generic Wedding Website
+# Your very own wedding website!
 
-Flask-based wedding website for any couple, with configuration-driven content, optional site password protection, a time-locked photo challenge and gallery, and a two-stage save-the-date / RSVP workflow.
+Flask-based wedding website, with configuration-driven content, optional site password protection, a time-locked photo challenge and gallery, and a two-stage save-the-date / RSVP workflow.
 
 ## Features
 
