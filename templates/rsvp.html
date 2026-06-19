@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Save the Date - {{ site_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>📅 Save the Date</h1>
+        <div class="decorative-line"></div>
+        <p>Help {{ couple_names }} plan this special day by sharing your details.</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div class="contact-wrapper">
+            <form method="POST" action="{{ url_for('rsvp') }}" class="contact-form">
+                <div class="form-group">
+                    <label for="names">Name(s) <span class="required">*</span></label>
+                    <input type="text" id="names" name="names" placeholder="e.g., John & Jane Smith" required>
+                    <small class="form-help">Include all guests in your party</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number <span class="required">*</span></label>
+                    <input type="tel" id="phone" name="phone" placeholder="e.g., 0400 123 456" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Mailing Address <span class="required">*</span></label>
+                    <textarea id="address" name="address" rows="3" placeholder="Street address, City, State, Postcode" required></textarea>
+                    <small class="form-help">We'll send your formal invitation here</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Save My Details</button>
+                
+                <p class="save-the-date-note">
+                    <strong>📬 What's Next?</strong><br>
+                    After submitting, you'll receive a formal invitation with a personalized QR code to confirm your RSVP closer to the wedding date.
+                </p>
+            </form>
+
+            <div class="rsvp-info">
+                <h3>📅 Wedding Details</h3>
+                <p><strong>Date:</strong> {{ wedding_config.wedding_date }}</p>
+                <p><strong>Venue:</strong> {{ wedding_config.venue }}</p>
+                <p><strong>Location:</strong> {{ wedding_config.city }}</p>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .contact-wrapper {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .contact-form {
+        background-color: var(--bg-white);
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid var(--border-color);
+        border-radius: 5px;
+        font-size: 1rem;
+        font-family: 'Montserrat', sans-serif;
+        transition: border-color 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+    }
+
+    .form-group textarea {
+        resize: vertical;
+    }
+
+    .form-help {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: var(--text-light);
+    }
+
+    .required {
+        color: #dc3545;
+    }
+
+    .save-the-date-note {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background-color: var(--bg-light);
+        border-left: 4px solid var(--gold-accent);
+        border-radius: 5px;
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    .rsvp-info {
+        background-color: var(--bg-light);
+        padding: 2rem;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .rsvp-info h3 {
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+
+    .rsvp-info p {
+        margin: 0.5rem 0;
+        font-size: 1.1rem;
+    }
+
+    @media (max-width: 768px) {
+        .contact-form {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}

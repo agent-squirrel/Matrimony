@@ -1,0 +1,625 @@
+{% extends "base.html" %}
+
+{% block title %}RSVP Admin - {{ site_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>📋 Save the Date & RSVP Tracking</h1>
+        <div class="decorative-line"></div>
+        <p>Total Guests: {{ rsvps|length }} | Confirmed RSVPs: {{ rsvps|selectattr('rsvp_confirmed')|list|length }}</p>
+        
+        <!-- QR Code Section -->
+        <div class="qr-code-container" style="margin: 1rem 0; text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+            <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">📱 Guest QR Code</h3>
+            <img src="{{ url_for('generate_save_qr') }}" alt="QR Code for Save the Date" style="max-width: 150px; border: 2px solid var(--primary-color); border-radius: 4px; padding: 8px; background: white; display: inline-block; margin: 0.5rem 0;">
+            <br>
+            <a href="{{ url_for('download_save_qr') }}" class="btn btn-primary" style="margin-top: 0.5rem; display: inline-block; padding: 0.4rem 0.8rem; font-size: 0.9rem;" download="save-the-date-qr.png">📥 Download High-Res</a>
+        </div>
+        
+        <div class="admin-actions">
+            <a href="{{ url_for('rsvp_admin_qr_codes') }}" class="export-btn">🎟️ Print Guest QR Codes</a>
+            <a href="{{ url_for('rsvp_admin_export') }}" class="export-btn">📥 Export to CSV</a>
+            <a href="{{ url_for('rsvp_admin_logout') }}" class="logout-btn">Logout</a>
+        </div>
+
+        <div class="admin-tabs" data-default-tab="{% if email_preview_html %}bulk-email{% else %}guest-list{% endif %}">
+            <button type="button" class="admin-tab-btn{% if not email_preview_html %} active{% endif %}" data-tab-target="guest-list">Guest List</button>
+            <button type="button" class="admin-tab-btn{% if email_preview_html %} active{% endif %}" data-tab-target="bulk-email">Bulk Email</button>
+        </div>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div class="admin-tab-panel{% if not email_preview_html %} active{% endif %}" data-tab-panel="guest-list">
+            {% if rsvps %}
+            <div class="table-container">
+            <table class="rsvp-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name(s)</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Email</th>
+                        <th>Unique Code</th>
+                        <th>Submitted</th>
+                        <th>RSVP Confirmed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rsvp in rsvps %}
+                    <tr class="{% if rsvp.rsvp_confirmed %}confirmed{% endif %}">
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ rsvp.names }}</strong></td>
+                        <td>{{ rsvp.phone }}</td>
+                        <td>{{ rsvp.address }}</td>
+                        <td><a href="mailto:{{ rsvp.email }}">{{ rsvp.email }}</a></td>
+                        <td>
+                            <code class="unique-code">{{ rsvp.unique_code }}</code>
+                            <br>
+                            <small><a href="{{ url_for('rsvp_confirm', code=rsvp.unique_code, _external=True) }}" target="_blank">View Link</a></small>
+                        </td>
+                        <td>{{ rsvp.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                        <td class="rsvp-status">
+                            {% if rsvp.rsvp_confirmed %}
+                                <span class="status-badge confirmed">✓ Yes</span>
+                                <br><small>{{ rsvp.rsvp_confirmed_at.strftime('%d-%m-%Y') if rsvp.rsvp_confirmed_at else '' }}</small>
+                            {% else %}
+                                <span class="status-badge pending">⏳ Pending</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-box">
+                    <div class="stat-number">{{ rsvps|length }}</div>
+                    <div class="stat-label">Total Guests</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">{{ rsvps|selectattr('rsvp_confirmed')|list|length }}</div>
+                    <div class="stat-label">Confirmed RSVPs</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">{{ rsvps|rejectattr('rsvp_confirmed')|list|length }}</div>
+                    <div class="stat-label">Pending RSVPs</div>
+                </div>
+            </div>
+
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <h2>No Save the Date Submissions Yet</h2>
+                <p>Guest information will appear here once they submit their details.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="admin-tab-panel{% if email_preview_html %} active{% endif %}" data-tab-panel="bulk-email">
+            <div class="bulk-email-card">
+                <h2>Bulk Email Guests</h2>
+                <p>Send one message to all guests, only confirmed RSVPs, or only unconfirmed RSVPs.</p>
+                <form method="POST" action="{{ url_for('rsvp_admin_bulk_email') }}" class="bulk-email-form">
+                    <div class="bulk-email-field">
+                        <label for="bulk-email-subject">Email Subject</label>
+                        <input id="bulk-email-subject" name="subject" type="text" maxlength="200" placeholder="A Message From {{ couple_names }}" value="{{ email_form.subject if email_form else '' }}">
+                    </div>
+
+                    <div class="bulk-email-field">
+                        <label for="bulk-email-message">Email Message</label>
+                        <textarea id="bulk-email-message" name="message" rows="6" required>{{ email_form.message if email_form else '' }}</textarea>
+                    </div>
+
+                    <label class="checkbox-field" for="bulk-email-confirmed-only">
+                        <input id="bulk-email-confirmed-only" name="confirmed_only" type="checkbox"{% if email_form and email_form.confirmed_only %} checked{% endif %}>
+                        <span>Email only confirmed RSVPs</span>
+                    </label>
+
+                    <label class="checkbox-field" for="bulk-email-unconfirmed-only">
+                        <input id="bulk-email-unconfirmed-only" name="unconfirmed_only" type="checkbox"{% if email_form and email_form.unconfirmed_only %} checked{% endif %}>
+                        <span>Email only unconfirmed RSVPs</span>
+                    </label>
+
+                    <div class="bulk-email-field">
+                        <label for="bulk-email-ad-hoc-email">Ad-hoc single email (optional)</label>
+                        <input id="bulk-email-ad-hoc-email" name="ad_hoc_email" type="email" maxlength="200" placeholder="guest@example.com" value="{{ email_form.ad_hoc_email if email_form else '' }}">
+                    </div>
+
+                    <div class="bulk-email-field">
+                        <label for="bulk-email-ad-hoc-name">Ad-hoc recipient name (optional)</label>
+                        <input id="bulk-email-ad-hoc-name" name="ad_hoc_name" type="text" maxlength="200" placeholder="Guest Name" value="{{ email_form.ad_hoc_name if email_form else '' }}">
+                    </div>
+
+                    <div class="bulk-email-help">
+                        If an ad-hoc email is provided, the message is sent only to that address and guest filters are ignored.
+                    </div>
+
+                    <div class="bulk-email-actions">
+                        <button type="submit" name="action" value="preview" class="export-btn bulk-email-submit secondary-action">Preview Email</button>
+                        <button type="submit" name="action" value="send" class="export-btn bulk-email-submit">Send Email</button>
+                    </div>
+                </form>
+
+                <div id="email-preview-wrap" class="email-preview-wrap{% if not email_preview_html %} hidden{% endif %}">
+                    <h3>Email Preview</h3>
+                    <p><strong>Subject:</strong> <span id="email-preview-subject">{{ email_preview_subject if email_preview_subject else '' }}</span></p>
+                    <p><strong>Preview recipient:</strong> <span id="email-preview-recipient">{{ email_preview_recipient if email_preview_recipient else '' }}</span></p>
+                    <div id="email-preview-frame" class="email-preview-frame">{{ email_preview_html|safe if email_preview_html else '' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .admin-tabs {
+        margin-top: 1.2rem;
+        display: inline-flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .admin-tab-btn {
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        background-color: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        border-radius: 6px;
+        padding: 0.45rem 1rem;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .admin-tab-btn:hover {
+        background-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .admin-tab-btn.active {
+        background-color: var(--gold-accent);
+        color: var(--primary-color);
+        border-color: var(--gold-accent);
+        font-weight: 600;
+    }
+
+    .admin-tab-panel {
+        display: none;
+    }
+
+    .admin-tab-panel.active {
+        display: block;
+    }
+
+    .bulk-email-card {
+        background-color: var(--bg-white);
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .bulk-email-card h2 {
+        margin: 0 0 0.5rem;
+        color: var(--primary-color);
+    }
+
+    .bulk-email-card p {
+        margin: 0 0 1rem;
+        color: var(--text-light);
+    }
+
+    .bulk-email-form {
+        display: grid;
+        gap: 0.9rem;
+    }
+
+    .bulk-email-field {
+        display: grid;
+        gap: 0.4rem;
+    }
+
+    .bulk-email-field label {
+        color: var(--text-dark);
+        font-weight: 600;
+    }
+
+    .bulk-email-field input,
+    .bulk-email-field textarea {
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 0.7rem 0.8rem;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.95rem;
+        resize: vertical;
+    }
+
+    .bulk-email-field input:focus,
+    .bulk-email-field textarea:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(45, 80, 22, 0.12);
+    }
+
+    .checkbox-field {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+
+    .bulk-email-submit {
+        margin-top: 0.25rem;
+        cursor: pointer;
+    }
+
+    .bulk-email-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .secondary-action {
+        background-color: #ffffff;
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .secondary-action:hover {
+        background-color: var(--primary-color);
+        color: #ffffff;
+    }
+
+    .bulk-email-help {
+        font-size: 0.85rem;
+        color: var(--text-light);
+    }
+
+    .email-preview-wrap {
+        margin-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+        padding-top: 1rem;
+    }
+
+    .email-preview-wrap.hidden {
+        display: none;
+    }
+
+    .email-preview-wrap h3 {
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .email-preview-wrap p {
+        margin: 0.2rem 0;
+        color: var(--text-dark);
+    }
+
+    .email-preview-frame {
+        margin-top: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        max-height: 500px;
+        overflow-y: auto;
+        background-color: #ffffff;
+    }
+
+    .table-container {
+        background-color: var(--bg-white);
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        overflow: visible;
+        margin-bottom: 2rem;
+    }
+
+    .rsvp-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: auto;
+    }
+
+    .rsvp-table thead {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .rsvp-table th,
+    .rsvp-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        vertical-align: top;
+    }
+
+    .rsvp-table th:first-child,
+    .rsvp-table td:first-child {
+        width: 1%;
+        min-width: 3rem;
+        text-align: center;
+        white-space: nowrap;
+        overflow-wrap: normal;
+        word-break: normal;
+    }
+
+    .rsvp-table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.875rem;
+        letter-spacing: 0.5px;
+    }
+
+    .rsvp-table tbody tr:hover {
+        background-color: var(--bg-light);
+    }
+
+    .rsvp-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .rsvp-table a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+
+    .rsvp-table a:hover {
+        text-decoration: underline;
+    }
+
+    .rsvp-table tbody tr.confirmed {
+        background-color: rgba(40, 167, 69, 0.05);
+    }
+
+    .unique-code {
+        background-color: var(--bg-light);
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        color: var(--primary-color);
+    }
+
+    .rsvp-status {
+        text-align: center;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .status-badge.confirmed {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .status-badge.pending {
+        background-color: #ffc107;
+        color: #333;
+    }
+
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .stat-box {
+        background-color: var(--bg-white);
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        font-family: 'Cormorant Garamond', serif;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 0.5rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background-color: var(--bg-light);
+        border-radius: 10px;
+    }
+
+    .empty-icon {
+        font-size: 5rem;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h2 {
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        color: var(--text-light);
+    }
+
+    .logout-btn {
+        display: inline-block;
+        margin-top: 1rem;
+        padding: 0.5rem 1.5rem;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 5px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        transition: all 0.3s ease;
+    }
+
+    .logout-btn:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.8);
+    }
+
+    .admin-actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .export-btn {
+        display: inline-block;
+        margin-top: 1rem;
+        padding: 0.5rem 1.5rem;
+        background-color: var(--button-color);
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 5px;
+        border: 1px solid var(--button-color);
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+
+    .export-btn:hover {
+        background-color: transparent;
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .bulk-email-actions .bulk-email-submit:hover {
+        background-color: var(--primary-color);
+        color: #ffffff;
+        border-color: var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
+        .rsvp-table {
+            font-size: 0.875rem;
+        }
+
+        .rsvp-table th,
+        .rsvp-table td {
+            padding: 0.75rem;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+        }
+
+        .admin-tabs {
+            display: flex;
+            width: 100%;
+        }
+
+        .admin-tab-btn {
+            flex: 1 1 auto;
+            text-align: center;
+        }
+    }
+
+    /* Print styles */
+    @media print {
+        .page-header,
+        nav,
+        footer {
+            display: none;
+        }
+
+        .table-container {
+            box-shadow: none;
+        }
+
+        .rsvp-table tbody tr:hover {
+            background-color: transparent;
+        }
+    }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const tabContainer = document.querySelector('.admin-tabs');
+    if (!tabContainer) {
+        return;
+    }
+
+    const tabButtons = Array.from(tabContainer.querySelectorAll('[data-tab-target]'));
+    const tabPanels = Array.from(document.querySelectorAll('[data-tab-panel]'));
+    const bulkEmailForm = document.querySelector('.bulk-email-form');
+    const previewWrap = document.getElementById('email-preview-wrap');
+    const previewFrame = document.getElementById('email-preview-frame');
+    const previewSubject = document.getElementById('email-preview-subject');
+    const previewRecipient = document.getElementById('email-preview-recipient');
+
+    const setActiveTab = function (tabName) {
+        tabButtons.forEach(function (button) {
+            button.classList.toggle('active', button.getAttribute('data-tab-target') === tabName);
+        });
+
+        tabPanels.forEach(function (panel) {
+            panel.classList.toggle('active', panel.getAttribute('data-tab-panel') === tabName);
+        });
+    };
+
+    tabButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            setActiveTab(button.getAttribute('data-tab-target'));
+        });
+    });
+
+    if (bulkEmailForm) {
+        bulkEmailForm.addEventListener('submit', async function (event) {
+            const submitter = event.submitter;
+            if (!submitter || submitter.value !== 'preview') {
+                return;
+            }
+
+            event.preventDefault();
+
+            const formData = new FormData(bulkEmailForm);
+            formData.set('action', 'preview');
+            try {
+                const response = await fetch(bulkEmailForm.getAttribute('action'), {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    alert(data.message || 'Unable to preview email.');
+                    return;
+                }
+
+                previewSubject.textContent = data.email_preview_subject || '';
+                previewRecipient.textContent = data.email_preview_recipient || '';
+                previewFrame.innerHTML = data.email_preview_html || '';
+                previewWrap.classList.remove('hidden');
+                setActiveTab('bulk-email');
+            } catch (error) {
+                alert('Unable to preview email right now. Please try again.');
+            }
+        });
+    }
+
+    setActiveTab(tabContainer.getAttribute('data-default-tab') || 'guest-list');
+});
+</script>
+{% endblock %}

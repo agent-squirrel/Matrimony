@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm RSVP - {{ site_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>🎉 RSVP Confirmation</h1>
+        <div class="decorative-line"></div>
+        <p>{{ guest.names }}</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div class="rsvp-confirm-wrapper">
+            {% if confirmed %}
+                <div class="confirmation-success">
+                    <div class="success-icon">✓</div>
+                    <h2>Thank You!</h2>
+                    <p class="lead">Your RSVP has been confirmed. We can't wait to celebrate with you!</p>
+                    
+                    <div class="guest-details">
+                        <h3>Your Details</h3>
+                        <p><strong>Name(s):</strong> {{ guest.names }}</p>
+                        <p><strong>Email:</strong> {{ guest.email }}</p>
+                        <p><strong>Phone:</strong> {{ guest.phone }}</p>
+                    </div>
+                    
+                    <div class="wedding-info">
+                        <h3>📅 Wedding Details</h3>
+                        <p><strong>Date:</strong> {{ wedding_config.wedding_date }}</p>
+                        <p><strong>Time:</strong> {{ wedding_config.ceremony_time }}</p>
+                        <p><strong>Venue:</strong> {{ wedding_config.venue }}</p>
+                        <p><strong>Location:</strong> {{ wedding_config.city }}</p>
+                    </div>
+                    
+                    <p class="note">If you need to make any changes, please contact us directly.</p>
+                </div>
+            {% else %}
+                <div class="confirmation-form">
+                    <div class="welcome-message">
+                        <h2>Welcome, {{ guest.names }}!</h2>
+                        <p class="lead">We're excited to have you join us for our special day.</p>
+                    </div>
+                    
+                    <div class="guest-details">
+                        <h3>Your Details</h3>
+                        <p><strong>Name(s):</strong> {{ guest.names }}</p>
+                        <p><strong>Email:</strong> {{ guest.email }}</p>
+                        <p><strong>Phone:</strong> {{ guest.phone }}</p>
+                        <p><strong>Address:</strong> {{ guest.address }}</p>
+                    </div>
+                    
+                    <div class="wedding-info">
+                        <h3>📅 Wedding Details</h3>
+                        <p><strong>Date:</strong> {{ wedding_config.wedding_date }}</p>
+                        <p><strong>Time:</strong> {{ wedding_config.ceremony_time }}</p>
+                        <p><strong>Venue:</strong> {{ wedding_config.venue }}</p>
+                        <p><strong>Location:</strong> {{ wedding_config.city }}</p>
+                    </div>
+                    
+                    <form method="POST" class="confirm-form">
+                        <div class="confirm-message">
+                            <p><strong>Will you be able to join us?</strong></p>
+                            <p>Click the button below to confirm your attendance.</p>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-large">✓ Confirm My Attendance</button>
+                    </form>
+                    
+                    <p class="note">If you cannot attend or need to update your details, please contact us directly.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<style>
+    .rsvp-confirm-wrapper {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .confirmation-success,
+    .confirmation-form {
+        background-color: var(--bg-white);
+        padding: 2.5rem;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        background-color: #28a745;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 0 auto 1.5rem;
+    }
+
+    .confirmation-success h2,
+    .confirmation-form h2 {
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        font-size: 2rem;
+    }
+
+    .lead {
+        font-size: 1.2rem;
+        color: var(--text-dark);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    .guest-details,
+    .wedding-info {
+        background-color: var(--bg-light);
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin: 1.5rem 0;
+        text-align: left;
+    }
+
+    .guest-details h3,
+    .wedding-info h3 {
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        font-size: 1.3rem;
+        text-align: center;
+    }
+
+    .guest-details p,
+    .wedding-info p {
+        margin: 0.5rem 0;
+        line-height: 1.6;
+    }
+
+    .welcome-message {
+        margin-bottom: 2rem;
+    }
+
+    .confirm-form {
+        margin: 2rem 0;
+    }
+
+    .confirm-message {
+        margin-bottom: 1.5rem;
+    }
+
+    .confirm-message p {
+        margin: 0.5rem 0;
+        font-size: 1.1rem;
+    }
+
+    .btn-large {
+        font-size: 1.2rem;
+        padding: 1rem 2rem;
+        min-width: 280px;
+    }
+
+    .note {
+        margin-top: 2rem;
+        font-size: 0.9rem;
+        color: var(--text-light);
+        font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+        .confirmation-success,
+        .confirmation-form {
+            padding: 1.5rem;
+        }
+
+        .success-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
+        }
+
+        .confirmation-success h2,
+        .confirmation-form h2 {
+            font-size: 1.5rem;
+        }
+
+        .lead {
+            font-size: 1.1rem;
+        }
+
+        .btn-large {
+            font-size: 1.1rem;
+            padding: 0.875rem 1.5rem;
+            min-width: 100%;
+        }
+    }
+</style>
+
+{% if confirmed %}
+<!-- Confetti celebration animation -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script>
+    // Fire confetti cannon celebration when RSVP is confirmed
+    function fireConfetti() {
+        const duration = 3000;
+        const end = Date.now() + duration;
+
+        // Wedding-themed colors: green, gold, white
+        const colors = ['#2d5016', '#4a7c2c', '#D4AF37', '#ffffff', '#f8f9f8'];
+
+        (function frame() {
+            // Launch from left side
+            confetti({
+                particleCount: 3,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0, y: 0.6 },
+                colors: colors
+            });
+            // Launch from right side
+            confetti({
+                particleCount: 3,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1, y: 0.6 },
+                colors: colors
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        }());
+
+        // Big burst in the center
+        setTimeout(() => {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: colors
+            });
+        }, 300);
+    }
+
+    // Fire on page load
+    document.addEventListener('DOMContentLoaded', fireConfetti);
+</script>
+{% endif %}
+{% endblock %}

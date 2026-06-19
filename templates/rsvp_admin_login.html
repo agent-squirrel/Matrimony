@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}RSVP Admin Login - {{ site_title }}{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-box">
+        <div class="login-icon">📋</div>
+        <h1 class="login-title">RSVP Admin</h1>
+        <p class="login-subtitle">Enter password to view RSVP submissions</p>
+        
+        <form method="POST" action="{{ url_for('rsvp_admin_login') }}" class="password-form">
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    placeholder="Enter password"
+                    autofocus
+                    required
+                >
+            </div>
+            
+            <button type="submit" class="submit-btn">View RSVPs</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .login-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+    
+    .login-box {
+        background-color: var(--bg-white);
+        padding: 3rem;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        max-width: 450px;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .login-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+    
+    .login-title {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+    
+    .login-subtitle {
+        color: var(--text-light);
+        margin-bottom: 2rem;
+    }
+    
+    .password-form {
+        text-align: left;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+    
+    .form-group input[type="password"] {
+        width: 100%;
+        padding: 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 5px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+        box-sizing: border-box;
+    }
+    
+    .form-group input[type="password"]:focus {
+        outline: none;
+        border-color: var(--primary-color);
+    }
+    
+    .submit-btn {
+        width: 100%;
+        padding: 1rem;
+        background-color: var(--button-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .submit-btn:hover {
+        background-color: var(--accent-color);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    @media (max-width: 768px) {
+        .login-box {
+            padding: 2rem;
+        }
+        
+        .login-title {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,317 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Gallery{% endblock %}
+
+{% block extra_head %}
+<style>
+.gallery-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+.gallery-count {
+    font-size: 0.875rem;
+    color: var(--admin-text-muted);
+}
+.gallery-count strong { color: var(--admin-text); }
+
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
+}
+
+.photo-card {
+    background: #fff;
+    border: 1px solid var(--admin-border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+    position: relative;
+}
+.photo-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+    transform: translateY(-2px);
+}
+
+.photo-card-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+    cursor: pointer;
+    background: #f0f4f8;
+}
+
+.photo-card-body {
+    padding: 0.75rem;
+}
+.photo-card-challenge {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--admin-accent);
+    margin-bottom: 0.2rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.photo-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+.photo-card-author {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--admin-text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.photo-card-date {
+    font-size: 0.72rem;
+    color: var(--admin-text-muted);
+    white-space: nowrap;
+}
+.photo-card-actions {
+    display: flex;
+    gap: 0.4rem;
+    padding: 0 0.75rem 0.75rem;
+}
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    line-height: 1;
+}
+.btn-view {
+    background: #f0f4f8;
+    border-color: #e2e8f0;
+    color: var(--admin-text-dark);
+}
+.btn-view:hover { background: #e2e8f0; border-color: #cbd5e1; }
+.btn-delete {
+    background: #fff0f0;
+    border-color: #fcc;
+    color: #c0392b;
+}
+.btn-delete:hover { background: #ffe0e0; border-color: #f99; }
+
+/* Lightbox */
+.ag-lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+.ag-lightbox.active { display: flex; }
+.ag-lb-img {
+    max-width: 90vw;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.ag-lb-close {
+    position: absolute;
+    top: 1.5rem; right: 1.75rem;
+    background: none; border: none;
+    color: #fff; font-size: 2.5rem;
+    cursor: pointer; line-height: 1;
+    opacity: 0.8;
+}
+.ag-lb-close:hover { opacity: 1; }
+.ag-lb-info {
+    position: absolute;
+    bottom: 1.5rem; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    text-align: center;
+    white-space: nowrap;
+}
+.ag-lb-info strong { display: block; font-size: 0.9rem; }
+.ag-lb-info span { font-size: 0.8rem; opacity: 0.8; }
+
+/* Delete confirm modal */
+.ag-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+.ag-modal-overlay.active { display: flex; }
+.ag-modal {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    padding: 1.75rem;
+    max-width: 400px;
+    width: 90%;
+}
+.ag-modal h3 { margin: 0 0 0.75rem; font-size: 1.1rem; color: var(--admin-text-dark); }
+.ag-modal p { margin: 0 0 1.5rem; font-size: 0.9rem; color: var(--admin-text-muted); }
+.ag-modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <div>
+        <h1>Photo Gallery</h1>
+        <p>All photo challenge submissions from guests.</p>
+    </div>
+</div>
+
+{% if submissions %}
+<div class="gallery-toolbar">
+    <div class="gallery-count">
+        <strong>{{ submissions|length }}</strong> photo{{ 's' if submissions|length != 1 else '' }} submitted
+    </div>
+    <a href="{{ url_for('admin_gallery_download') }}" class="btn btn-secondary" style="display:inline-flex;align-items:center;gap:0.4rem;text-decoration:none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download All Photos
+    </a>
+</div>
+
+<div class="photo-grid">
+    {% for submission in submissions %}
+    <div class="photo-card" id="photo-card-{{ submission.id }}">
+        <img src="{{ url_for('static', filename='uploads/photos/' + submission.filename) }}"
+             alt="{{ submission.challenge }}"
+             class="photo-card-img"
+             onclick="openLightbox('{{ url_for('static', filename='uploads/photos/' + submission.filename) | e }}', '{{ submission.challenge | e }}', '{{ submission.guest_name | e }}')">
+        <div class="photo-card-body">
+            <div class="photo-card-challenge" title="{{ submission.challenge }}">{{ submission.challenge }}</div>
+            <div class="photo-card-meta">
+                <span class="photo-card-author">{{ submission.guest_name }}</span>
+                <span class="photo-card-date">{{ submission.created_at.strftime('%b %d') }}</span>
+            </div>
+        </div>
+        <div class="photo-card-actions">
+            <a href="{{ url_for('static', filename='uploads/photos/' + submission.filename) }}"
+               target="_blank" class="btn-icon btn-view">
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                View Full
+            </a>
+            <button type="button" class="btn-icon btn-delete"
+                    onclick="confirmDelete({{ submission.id }}, '{{ submission.guest_name | e }}')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                Delete
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="card empty-state">
+    <h3>No photos yet</h3>
+    <p>Photo challenge submissions will appear here once guests start uploading.</p>
+</div>
+{% endif %}
+
+<!-- Lightbox -->
+<div id="ag-lightbox" class="ag-lightbox" onclick="closeLightbox()">
+    <button class="ag-lb-close" onclick="closeLightbox()">&times;</button>
+    <img id="ag-lb-img" class="ag-lb-img" onclick="event.stopPropagation()">
+    <div class="ag-lb-info" onclick="event.stopPropagation()">
+        <strong id="ag-lb-challenge"></strong>
+        <span id="ag-lb-author"></span>
+    </div>
+</div>
+
+<!-- Delete confirm modal -->
+<div id="ag-delete-modal" class="ag-modal-overlay" onclick="closeDeleteModal()">
+    <div class="ag-modal" onclick="event.stopPropagation()">
+        <h3>Delete Photo?</h3>
+        <p id="ag-delete-msg">This will permanently delete the photo and cannot be undone.</p>
+        <div class="ag-modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+            <button type="button" class="btn btn-danger" id="ag-confirm-delete-btn" style="background:#e74c3c;color:#fff;border:none;">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function openLightbox(src, challenge, author) {
+    document.getElementById('ag-lb-img').src = src;
+    document.getElementById('ag-lb-challenge').textContent = challenge;
+    document.getElementById('ag-lb-author').textContent = 'by ' + author;
+    document.getElementById('ag-lightbox').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+    document.getElementById('ag-lightbox').classList.remove('active');
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeLightbox(); closeDeleteModal(); }
+});
+
+var _deletePhotoId = null;
+function confirmDelete(photoId, guestName) {
+    _deletePhotoId = photoId;
+    document.getElementById('ag-delete-msg').textContent =
+        'This will permanently delete the photo submitted by "' + guestName + '". This cannot be undone.';
+    document.getElementById('ag-delete-modal').classList.add('active');
+}
+function closeDeleteModal() {
+    document.getElementById('ag-delete-modal').classList.remove('active');
+    _deletePhotoId = null;
+}
+document.getElementById('ag-confirm-delete-btn').addEventListener('click', function() {
+    if (!_deletePhotoId) return;
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Deleting…';
+    fetch('/admin/gallery/delete/' + _deletePhotoId, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': '' }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            var card = document.getElementById('photo-card-' + _deletePhotoId);
+            if (card) {
+                card.style.transition = 'opacity 0.3s, transform 0.3s';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(function() { card.remove(); }, 300);
+            }
+            closeDeleteModal();
+        } else {
+            btn.disabled = false;
+            btn.textContent = 'Delete';
+            alert('Failed to delete photo.');
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.textContent = 'Delete';
+        alert('An error occurred.');
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Wedding Details - {{ site_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>Wedding Details</h1>
+        <div class="decorative-line"></div>
+        <p>{{ couple_names }}</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div class="details-grid">
+            {% if wedding_config.show_ceremony %}
+                <div class="detail-card">
+                    <h3>Ceremony</h3>
+                    <div class="detail-item">
+                        <strong>Time:</strong> {{ wedding_config.ceremony_time }}
+                    </div>
+                    <div class="detail-item">
+                        <strong>Location:</strong> {{ wedding_config.ceremony_location }}
+                    </div>
+                    {% if wedding_config.ceremony_lat and wedding_config.ceremony_lng %}
+                    <div class="detail-item">
+                        <a href="https://www.google.com/maps?q={{ wedding_config.ceremony_lat }},{{ wedding_config.ceremony_lng }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem; margin-top: 0.5rem;">📍 View on Map</a>
+                    </div>
+                    {% elif wedding_config.ceremony_location and wedding_config.ceremony_location != 'TBD' %}
+                    <div class="detail-item">
+                        <a href="https://www.google.com/maps/search/{{ wedding_config.ceremony_location | urlencode }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem; margin-top: 0.5rem;">📍 View on Map</a>
+                    </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {% if wedding_config.show_reception %}
+                <div class="detail-card">
+                    <h3>Reception</h3>
+                    <div class="detail-item">
+                        <strong>Time:</strong> {{ wedding_config.reception_time }}
+                    </div>
+                    <div class="detail-item">
+                        <strong>Location:</strong> {{ wedding_config.reception_location }}
+                    </div>
+                    {% if wedding_config.reception_lat and wedding_config.reception_lng %}
+                    <div class="detail-item">
+                        <a href="https://www.google.com/maps?q={{ wedding_config.reception_lat }},{{ wedding_config.reception_lng }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem; margin-top: 0.5rem;">📍 View on Map</a>
+                    </div>
+                    {% elif wedding_config.reception_location and wedding_config.reception_location != 'TBD' %}
+                    <div class="detail-item">
+                        <a href="https://www.google.com/maps/search/{{ wedding_config.reception_location | urlencode }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem; margin-top: 0.5rem;">📍 View on Map</a>
+                    </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            {% if wedding_config.show_after_party %}
+                <div class="detail-card">
+                    <h3>After Party</h3>
+                    {% if wedding_config.after_party_time and wedding_config.after_party_time != 'TBD' %}
+                    <div class="detail-item">
+                        <strong>Time:</strong> {{ wedding_config.after_party_time }}
+                    </div>
+                    {% endif %}
+                    <div class="detail-item">
+                        <strong>Location:</strong> {{ wedding_config.after_party_location }}
+                    </div>
+                    {% if wedding_config.after_party_lat and wedding_config.after_party_lng %}
+                    <div class="detail-item">
+                        <a href="https://www.google.com/maps?q={{ wedding_config.after_party_lat }},{{ wedding_config.after_party_lng }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem; margin-top: 0.5rem;">📍 View on Map</a>
+                    </div>
+                    {% elif wedding_config.after_party_location and wedding_config.after_party_location != 'TBD' %}
+                    <div class="detail-item">
+                        <a href="https://www.google.com/maps/search/{{ wedding_config.after_party_location | urlencode }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem; margin-top: 0.5rem;">📍 View on Map</a>
+                    </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+<!--
+
+            <div class="detail-card">
+                <h3>RSVP</h3>
+                <div class="detail-item">
+                    RSVP information coming soon.
+                </div>
+            </div>
+-->
+            {% if wedding_config.show_registry %}
+                <div class="detail-card">
+                    <h3>Registry</h3>
+                    {% if wedding_config.registry_name %}
+                    <div class="detail-item">
+                        {{ wedding_config.registry_name }}
+                    </div>
+                    {% endif %}
+                    {% if wedding_config.registry_url %}
+                    <div class="detail-item">
+                        <a href="{{ wedding_config.registry_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem; margin-top: 0.5rem;">🎁 View Registry</a>
+                    </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

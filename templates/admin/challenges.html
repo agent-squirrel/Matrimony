@@ -1,0 +1,68 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Photo Challenges{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <div>
+        <h1>Photo Challenges</h1>
+        <p>Manage the challenges assigned to guests for the photo competition.</p>
+    </div>
+</div>
+
+<div style="background: white; padding: 2rem; border-radius: 10px; border: 1px solid var(--admin-border); box-shadow: var(--shadow-sm); margin-bottom: 2rem;">
+    <h2 style="color: var(--primary-color); margin-bottom: 1.5rem;">Add New Challenge</h2>
+    <form method="POST" class="admin-form" style="background: none; padding: 0; box-shadow: none;">
+        <input type="hidden" name="action" value="add">
+        
+        <div class="form-group">
+            <label for="name">Challenge Name</label>
+            <input type="text" id="name" name="name" required placeholder="e.g., Take a photo with the couple">
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Description (optional)</label>
+            <textarea id="description" name="description" placeholder="Add any additional instructions for this challenge..."></textarea>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Add Challenge</button>
+    </form>
+</div>
+
+{% if challenges %}
+<div style="background: white; border-radius: 10px; border: 1px solid var(--admin-border); box-shadow: var(--shadow-sm); overflow: hidden;">
+    <h2 style="color: var(--primary-color); padding: 2rem 2rem 1rem 2rem; margin: 0;">Existing Challenges ({{ challenges|length }})</h2>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Challenge Name</th>
+                <th>Description</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for challenge in challenges %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ challenge.name }}</td>
+                <td>{{ challenge.description or '-' }}</td>
+                <td>
+                    <form method="POST" style="display: inline;">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="challenge_id" value="{{ challenge.id }}">
+                        <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="return confirm('Are you sure you want to delete this challenge?');">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card empty-state">
+    <h3>No challenges yet</h3>
+    <p>Add your first challenge above to get started.</p>
+</div>
+{% endif %}
+{% endblock %}

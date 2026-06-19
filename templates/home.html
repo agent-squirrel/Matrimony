@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">{{ wedding_config.groom }} & {{ wedding_config.bride }}</h1>
+            <p class="hero-subtitle">Are Getting Married!</p>
+            <p class="hero-date">{{ wedding_config.wedding_datetime.strftime('%Y') if wedding_config.wedding_datetime else '2026' }}</p>
+            <div class="hero-divider"></div>
+        </div>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div class="section-header">
+            <h2>Save the Date</h2>
+            <div class="decorative-line-dark"></div>
+        </div>
+        <div class="wedding-info">
+            <div class="info-card">
+                <div class="info-icon">📅</div>
+                <h3>When</h3>
+                <p>{{ wedding_config.wedding_date }}</p>
+            </div>
+            <div class="info-card">
+                <div class="info-icon">📍</div>
+                <h3>Where</h3>
+                <p>{{ wedding_config.venue }}</p>
+                <p class="text-muted">{{ wedding_config.city }}</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-alt">
+    <div class="container">
+        <div class="section-header">
+            <h2>Join Us</h2>
+            <div class="decorative-line-dark"></div>
+        </div>
+        <div class="text-center">
+            <p class="lead">We're so excited to celebrate our special day with you!</p>
+            <p>Can't attend in person? Watch the ceremony live on our Twitch stream!</p>
+            <div style="margin: 2rem 0;">
+                <a href="{{ url_for('stream') }}" class="btn btn-primary">Watch Live Stream 📺</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

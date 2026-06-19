@@ -1,0 +1,1707 @@
+{% extends "admin/base.html" %}
+{% block title %}Wedding Settings - Admin Panel{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<style>
+/* ── Override form width for this wide page ──────────────── */
+.admin-form { max-width: 100%; background: transparent; border: none; box-shadow: none; padding: 0; }
+
+/* ── Tab navigation ──────────────────────────────────────── */
+.settings-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    border-bottom: 2px solid var(--admin-border);
+    margin-bottom: 2rem;
+    gap: 0;
+}
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 0.85rem 1.6rem;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--admin-text-light);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+}
+.tab-btn:hover { color: var(--admin-text-dark); }
+.tab-btn.active {
+    color: var(--admin-accent);
+    border-bottom-color: var(--admin-accent);
+    font-weight: 600;
+}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Field section headings ──────────────────────────────── */
+.field-section {
+    font-size: 0.69rem;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--admin-text-light);
+    border-top: 1px solid var(--admin-border);
+    padding-top: 1.5rem;
+    margin: 2rem 0 1.2rem;
+}
+.field-section.first { border-top: none; padding-top: 0; margin-top: 0; }
+
+/* ── Settings section cards ─────────────────────────────── */
+.settings-card {
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: 10px;
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.settings-card-title {
+    font-size: 0.69rem;
+    font-weight: 700;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--admin-text-light);
+    margin: 0 0 1.2rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--admin-border);
+}
+.settings-card .form-group:last-child { margin-bottom: 0; }
+
+/* ── Grid helpers ────────────────────────────────────────── */
+.fg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.fg3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+@media (max-width: 700px) { .fg2, .fg3 { grid-template-columns: 1fr; } }
+
+/* ── Sticky save bar ─────────────────────────────────────── */
+.save-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    background: var(--admin-bg);
+    border-top: 1px solid var(--admin-border);
+    padding: 1.2rem 0 0.6rem;
+    margin-top: 2.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+/* ── Location picker ─────────────────────────────────────── */
+.loc-picker {
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--admin-bg);
+}
+.loc-search-row {
+    display: flex;
+    gap: 0;
+}
+.loc-search-row .loc-search {
+    flex: 1;
+    border: none;
+    border-radius: 0;
+    background: var(--admin-bg);
+    padding: 0.55rem 0.85rem;
+    font-size: 0.88rem;
+    outline: none;
+    min-width: 0;
+}
+.loc-search-row .loc-search-btn {
+    background: var(--admin-accent);
+    color: #fff;
+    border: none;
+    padding: 0 1.1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+.loc-search-row .loc-search-btn:hover { filter: brightness(1.1); }
+.loc-search-row .loc-search-btn.loc-btn-ok {
+    background: #27ae60;
+}
+/* collapsible map body */
+.loc-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+    border-top: 0 solid var(--admin-border);
+}
+.loc-body.open {
+    max-height: 320px;
+    border-top-width: 1px;
+}
+.loc-map {
+    height: 220px;
+    width: 100%;
+}
+.loc-coords {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.78rem;
+    color: var(--admin-text-light);
+    border-top: 1px solid var(--admin-border);
+    background: var(--admin-surface);
+}
+/* saved badge shown when map is collapsed and a pin exists */
+.loc-saved {
+    padding: 0.35rem 0.85rem;
+    font-size: 0.78rem;
+    color: #27ae60;
+    border-top: 1px solid var(--admin-border);
+    background: var(--admin-surface);
+    display: none;
+}
+.loc-saved.visible { display: block; }
+
+/* ── Layout picker ───────────────────────────────────────── */
+.layout-picker {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+@media (max-width: 860px) { .layout-picker { grid-template-columns: 1fr; } }
+
+.layout-card {
+    border: 2px solid var(--admin-border);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fff;
+    position: relative;
+    user-select: none;
+}
+.layout-card:hover {
+    border-color: #9aabbb;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.10);
+}
+.layout-card.selected {
+    border-color: var(--admin-accent);
+    box-shadow: 0 4px 18px rgba(52, 152, 219, 0.20);
+}
+.lc-check {
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 22px; height: 22px;
+    background: var(--admin-accent);
+    color: #fff;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    font-weight: 700;
+    z-index: 5;
+    line-height: 1;
+}
+.layout-card.selected .lc-check { display: flex; }
+
+/* ── Mini browser frame ──────────────────────────────────── */
+.mini-browser {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: #ddd;
+    overflow: hidden;
+    position: relative;
+}
+.mini-chrome {
+    height: 13%;
+    background: #d4d4d4;
+    border-bottom: 1px solid #bbb;
+    display: flex;
+    align-items: center;
+    padding: 0 5%;
+    gap: 2.5%;
+}
+.mc-dot { width: 7%; aspect-ratio: 1; border-radius: 50%; background: #b8b8b8; flex-shrink: 0; }
+.mc-bar {
+    flex: 1; height: 44%;
+    background: #eee; border-radius: 20px;
+    margin-left: 3%; border: 1px solid #ccc;
+}
+.mini-site {
+    height: 87%; width: 100%;
+    display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ── Classic preview ─────────── */
+.pv-classic .pv-nav {
+    height: 11%; background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex; align-items: center;
+    padding: 0 5%; gap: 4%; flex-shrink: 0;
+}
+.pv-classic .pv-brand {
+    width: 14%; height: 46%;
+    background: var(--pv-nav-text, #2c3e50);
+    opacity: 0.6; border-radius: 2px;
+}
+.pv-classic .pv-links { display: flex; gap: 4%; margin-left: auto; }
+.pv-classic .pv-links span {
+    width: 10%; height: 5px;
+    background: var(--pv-nav-text, #2c3e50);
+    opacity: 0.28; border-radius: 2px;
+}
+.pv-classic .pv-hero {
+    height: 37%; background: var(--pv-primary, #2d5016);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 7%; flex-shrink: 0;
+}
+.pv-classic .pv-hero-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.6rem; font-weight: 300;
+    color: var(--pv-primary-text, #fff);
+    letter-spacing: 0.06em; white-space: nowrap;
+}
+.pv-classic .pv-rule { width: 22%; height: 1px; background: var(--pv-primary-text, #fff); opacity: 0.45; }
+.pv-classic .pv-sub { font-size: 0.38rem; color: var(--pv-primary-text, #fff); opacity: 0.7; }
+.pv-classic .pv-section {
+    flex: 1; background: #f4f4f4;
+    display: flex; align-items: center;
+    justify-content: center; gap: 4%; padding: 0 4%;
+}
+.pv-classic .pv-card {
+    flex: 1; height: 62%;
+    background: #fff; border-radius: 4px;
+    border-left: 3px solid var(--pv-accent, #4a7c2c);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.08);
+}
+.pv-classic .pv-footer { height: 9%; background: var(--pv-footer-bg, #2c3e50); flex-shrink: 0; }
+
+/* ── Editorial preview ───────── */
+.pv-editorial .pv-nav {
+    height: 11%; background: var(--pv-primary, #2d5016);
+    display: flex; align-items: center;
+    padding: 0 5%; gap: 4%; flex-shrink: 0;
+}
+.pv-editorial .pv-brand {
+    width: 14%; height: 46%;
+    background: var(--pv-primary-text, #fff);
+    opacity: 0.85; border-radius: 2px;
+}
+.pv-editorial .pv-links { display: flex; gap: 4%; margin-left: auto; }
+.pv-editorial .pv-links span {
+    width: 10%; height: 5px;
+    background: var(--pv-primary-text, #fff);
+    opacity: 0.55; border-radius: 2px;
+}
+.pv-editorial .pv-hero {
+    height: 43%; background: var(--pv-primary, #2d5016);
+    display: flex; flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 7% 9%;
+    clip-path: polygon(0 0, 100% 0, 100% 80%, 0 100%);
+    margin-bottom: -5%; flex-shrink: 0;
+    z-index: 1; position: relative;
+}
+.pv-editorial .pv-hero-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.65rem; font-weight: 300;
+    color: var(--pv-primary-text, #fff);
+    letter-spacing: 0.04em;
+}
+.pv-editorial .pv-rule { width: 16%; height: 1px; background: var(--pv-gold, #d4af37); margin: 5% 0; }
+.pv-editorial .pv-sub {
+    font-size: 0.3rem; color: var(--pv-primary-text, #fff);
+    opacity: 0.65; letter-spacing: 0.18em; text-transform: uppercase;
+}
+.pv-editorial .pv-section {
+    flex: 1; background: #fff;
+    display: flex; align-items: center;
+    justify-content: flex-start; gap: 4%; padding: 10% 6% 5%;
+}
+.pv-editorial .pv-card {
+    flex: 1; height: 68%;
+    background: #f8f8f8;
+    border-top: 2px solid var(--pv-accent, #4a7c2c);
+}
+.pv-editorial .pv-footer { height: 9%; background: var(--pv-footer-bg, #2c3e50); flex-shrink: 0; }
+
+/* ── Minimal preview ─────────── */
+.pv-minimal .pv-nav {
+    height: 11%; background: rgba(250, 250, 249, 0.98);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+    display: flex; align-items: center;
+    padding: 0 5%; gap: 4%; flex-shrink: 0;
+}
+.pv-minimal .pv-brand {
+    width: 11%; height: 38%;
+    background: var(--pv-nav-text, #2c3e50);
+    opacity: 0.45; border-radius: 1px;
+}
+.pv-minimal .pv-links { display: flex; gap: 4%; margin-left: auto; }
+.pv-minimal .pv-links span {
+    width: 10%; height: 4px;
+    background: var(--pv-nav-text, #2c3e50);
+    opacity: 0.18; border-radius: 1px;
+}
+.pv-minimal .pv-hero {
+    height: 33%; background: #fafaf9;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+    padding: 0 8%; flex-shrink: 0;
+}
+.pv-minimal .pv-hero-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.65rem; font-weight: 300;
+    color: var(--pv-primary, #2d5016);
+    letter-spacing: 0.08em;
+}
+.pv-minimal .pv-rule { width: 12%; height: 1px; background: var(--pv-accent, #4a7c2c); margin: 7% 0; opacity: 0.45; }
+.pv-minimal .pv-sub { font-size: 0.35rem; color: #aaa; }
+.pv-minimal .pv-section {
+    flex: 1; background: #fafaf9;
+    display: flex; align-items: center;
+    justify-content: center; gap: 4%; padding: 0 8%;
+}
+.pv-minimal .pv-card {
+    flex: 1; height: 50%; background: transparent;
+    border-top: 1px solid rgba(0, 0, 0, 0.09);
+}
+.pv-minimal .pv-footer {
+    height: 8%; background: transparent;
+    border-top: 1px solid rgba(0, 0, 0, 0.06); flex-shrink: 0;
+}
+
+/* ── Romantic preview ────────── */
+.pv-romantic .pv-nav {
+    height: 11%; background: rgba(255, 253, 249, 0.97);
+    border-bottom: 1px solid rgba(180, 100, 100, 0.10);
+    display: flex; align-items: center;
+    padding: 0 5%; gap: 4%; flex-shrink: 0;
+}
+.pv-romantic .pv-brand {
+    width: 12%; height: 42%;
+    background: var(--pv-nav-text, #2c3e50);
+    opacity: 0.5; border-radius: 6px;
+}
+.pv-romantic .pv-links { display: flex; gap: 4%; margin-left: auto; }
+.pv-romantic .pv-links span {
+    width: 10%; height: 5px;
+    background: var(--pv-nav-text, #2c3e50);
+    opacity: 0.22; border-radius: 6px;
+}
+.pv-romantic .pv-hero {
+    height: 36%; background: radial-gradient(ellipse at 50% 60%, var(--pv-primary, #2d5016) 0%, color-mix(in srgb, var(--pv-primary, #2d5016) 70%, #000) 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 6%; flex-shrink: 0;
+}
+.pv-romantic .pv-hero-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.6rem; font-weight: 300;
+    color: var(--pv-primary-text, #fff);
+    letter-spacing: 0.07em; white-space: nowrap;
+}
+.pv-romantic .pv-rule { width: 20%; height: 1px; background: var(--pv-gold, #d4af37); opacity: 0.70; border-radius: 2px; }
+.pv-romantic .pv-sub { font-size: 0.35rem; color: var(--pv-primary-text, #fff); opacity: 0.70; }
+.pv-romantic .pv-section {
+    flex: 1; background: #fffdf9;
+    display: flex; align-items: center;
+    justify-content: center; gap: 4%; padding: 0 5%;
+}
+.pv-romantic .pv-card {
+    flex: 1; height: 58%;
+    background: #fff; border-radius: 10px;
+    border-left: 3px solid var(--pv-accent, #4a7c2c);
+    box-shadow: 0 2px 10px rgba(180, 100, 100, 0.10);
+}
+.pv-romantic .pv-footer {
+    height: 9%; background: var(--pv-footer-bg, #2c3e50);
+    border-radius: 12px 12px 0 0; flex-shrink: 0;
+}
+
+/* ── Luxe preview ────────────── */
+.pv-luxe .pv-nav {
+    height: 11%; background: #0f0f0f;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+    display: flex; align-items: center;
+    padding: 0 5%; gap: 4%; flex-shrink: 0;
+}
+.pv-luxe .pv-brand {
+    width: 14%; height: 46%;
+    background: var(--pv-gold, #d4af37);
+    opacity: 0.85; border-radius: 2px;
+}
+.pv-luxe .pv-links { display: flex; gap: 4%; margin-left: auto; }
+.pv-luxe .pv-links span {
+    width: 10%; height: 5px;
+    background: #c8bfb4;
+    opacity: 0.40; border-radius: 2px;
+}
+.pv-luxe .pv-hero {
+    height: 40%; background: linear-gradient(160deg, #1a1a1a 0%, #0a0a0a 60%, color-mix(in srgb, var(--pv-primary, #2d5016) 25%, #000) 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 6%; flex-shrink: 0; position: relative;
+}
+.pv-luxe .pv-hero-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.62rem; font-weight: 300;
+    color: #f5efe6;
+    letter-spacing: 0.10em; white-space: nowrap;
+}
+.pv-luxe .pv-rule { width: 28%; height: 1px; background: linear-gradient(90deg, transparent, var(--pv-gold, #d4af37), transparent); }
+.pv-luxe .pv-sub { font-size: 0.3rem; color: rgba(212, 175, 55, 0.70); letter-spacing: 0.20em; }
+.pv-luxe .pv-section {
+    flex: 1; background: #0f0f0f;
+    display: flex; align-items: center;
+    justify-content: center; gap: 4%; padding: 0 4%;
+}
+.pv-luxe .pv-card {
+    flex: 1; height: 60%; background: #1a1a1a;
+    border-top: 2px solid var(--pv-gold, #d4af37);
+    border-radius: 3px;
+}
+.pv-luxe .pv-footer {
+    height: 9%; background: #080808;
+    border-top: 1px solid rgba(212, 175, 55, 0.15); flex-shrink: 0;
+}
+
+/* ── Layout card caption ─────────────────────────────────── */
+.layout-card-info { padding: 0.75rem 1rem 0.9rem; }
+.layout-card-info strong { font-size: 0.9rem; color: var(--admin-text-dark); display: block; margin-bottom: 0.2rem; }
+.layout-card-info span { font-size: 0.75rem; color: var(--admin-text-light); }
+
+/* ── Date / time inputs ─────────────────────────────────── */
+.date-time-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+@media (max-width: 700px) { .date-time-grid { grid-template-columns: 1fr; } }
+.datetime-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+.datetime-field label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--admin-text-light);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.datetime-field input[type="date"],
+.datetime-field input[type="time"],
+.datetime-field .flatpickr-input {
+    width: 100%;
+    padding: 0.65rem 0.75rem;
+    border: 1.5px solid var(--admin-border);
+    border-radius: 7px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    background: #fff;
+    color: var(--admin-text-dark);
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+.datetime-field input[type="date"]:focus,
+.datetime-field input[type="time"]:focus,
+.datetime-field .flatpickr-input:focus {
+    outline: none;
+    border-color: var(--admin-accent);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.13);
+}
+/* Flatpickr theme overrides to match admin style */
+.flatpickr-calendar {
+    font-family: 'Inter', sans-serif;
+    border: 1.5px solid var(--admin-border);
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    overflow: hidden;
+}
+.flatpickr-months {
+    background: var(--admin-accent);
+    padding: 0.3rem 0;
+}
+.flatpickr-months .flatpickr-month,
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    fill: #fff;
+    color: #fff;
+}
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg { fill: rgba(255,255,255,0.75); }
+.flatpickr-current-month { color: #fff; font-weight: 600; font-size: 1rem; }
+.flatpickr-current-month .numInputWrapper:hover { background: rgba(255,255,255,0.15); }
+.flatpickr-current-month input.cur-year { color: #fff; }
+.flatpickr-weekdays { background: #f0f4f8; border-bottom: 1px solid var(--admin-border); }
+span.flatpickr-weekday { color: var(--admin-text-muted); font-weight: 600; font-size: 0.75rem; }
+.flatpickr-day {
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: var(--admin-text-dark);
+}
+.flatpickr-day:hover { background: #f0f4f8; border-color: #f0f4f8; }
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    background: var(--admin-accent);
+    border-color: var(--admin-accent);
+    color: #fff;
+}
+.flatpickr-day.today { border-color: var(--admin-accent); color: var(--admin-accent); font-weight: 600; }
+.flatpickr-day.today:hover { background: rgba(52,152,219,0.08); border-color: var(--admin-accent); }
+.flatpickr-day.today.selected { color: #fff; }
+.flatpickr-time input { font-family: 'Inter', sans-serif; color: var(--admin-text-dark); font-size: 1.05rem; }
+.flatpickr-time .flatpickr-am-pm { color: var(--admin-text-dark); }
+.flatpickr-time input:hover,
+.flatpickr-time .flatpickr-am-pm:hover { background: #f0f4f8; }
+
+/* ── Colour swatches ─────────────────────────────────────── */
+.color-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.2rem;
+}
+@media (max-width: 860px) { .color-grid { grid-template-columns: repeat(2, 1fr); } }
+.color-swatch { display: flex; flex-direction: column; gap: 0.35rem; }
+.color-swatch label { font-size: 0.77rem; font-weight: 600; color: var(--admin-text-light); }
+.color-swatch input[type="color"] {
+    width: 100%; height: 44px;
+    border: 1px solid var(--admin-border);
+    border-radius: 6px; cursor: pointer;
+    padding: 3px; background: none;
+}
+
+/* ── Preset chips ────────────────────────────────────────── */
+.preset-strip { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+.preset-chip {
+    display: flex; align-items: center; gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    border: 1.5px solid var(--admin-border);
+    border-radius: 20px;
+    background: #fff; cursor: pointer;
+    font-size: 0.78rem; font-weight: 600;
+    font-family: 'Montserrat', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.preset-chip:hover { border-color: var(--admin-accent); box-shadow: 0 2px 8px rgba(52, 152, 219, 0.15); }
+.preset-chip.active-preset { border-color: var(--admin-accent); background: rgba(52, 152, 219, 0.07); }
+.chip-dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.10); flex-shrink: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1>Site Settings</h1>
+</div>
+
+<form method="POST" class="admin-form" id="settingsForm" style="max-width:100%;">
+
+    <!-- Tab navigation -->
+    <div class="settings-tabs" role="tablist" aria-label="Settings sections">
+        <button type="button" class="tab-btn active" data-tab="couple" role="tab" aria-selected="true" aria-controls="tab-couple">Couple &amp; Event</button>
+        <button type="button" class="tab-btn" data-tab="appearance" role="tab" aria-selected="false" aria-controls="tab-appearance">Appearance</button>
+        <button type="button" class="tab-btn" data-tab="site" role="tab" aria-selected="false" aria-controls="tab-site">Site &amp; Features</button>
+        <button type="button" class="tab-btn" data-tab="email" role="tab" aria-selected="false" aria-controls="tab-email">Email</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         TAB 1 · COUPLE & EVENT
+         ═══════════════════════════════════════════════════════ -->
+    <div class="tab-panel active" id="tab-couple" role="tabpanel">
+
+        <div class="settings-card">
+        <p class="settings-card-title">Couple</p>
+        <div class="fg2">
+            <div class="form-group">
+                <label for="groom">Partner 1</label>
+                <input type="text" id="groom" name="groom" value="{{ wedding_config.groom }}" required>
+            </div>
+            <div class="form-group">
+                <label for="bride">Partner 2</label>
+                <input type="text" id="bride" name="bride" value="{{ wedding_config.bride }}" required>
+            </div>
+        </div>
+        </div><!-- /card -->
+
+        <div class="settings-card">
+        <p class="settings-card-title">Date &amp; Venue</p>
+        <div class="date-time-grid" style="margin-bottom:1rem;">
+            <div class="datetime-field">
+                <label for="wedding_date">Wedding Date</label>
+                <input type="date" id="wedding_date" name="wedding_date" value="{{ wedding_date_value }}" required>
+            </div>
+            <div class="datetime-field">
+                <label for="wedding_time">Wedding Time</label>
+                <input type="time" id="wedding_time" name="wedding_time" value="{{ wedding_time_value }}">
+            </div>
+        </div>
+        <div class="fg2">
+            <div class="form-group">
+                <label for="venue">Venue Name</label>
+                <input type="text" id="venue" name="venue" value="{{ wedding_config.venue }}" required>
+            </div>
+            <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" id="city" name="city" value="{{ wedding_config.city }}" required>
+            </div>
+        </div>
+        </div><!-- /card -->
+
+        <div class="settings-card">
+        <p class="settings-card-title">Event Details</p>
+        <div class="fg3" style="margin-bottom:1.2rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;cursor:pointer;">
+                <input type="checkbox" name="show_ceremony" {% if wedding_config.show_ceremony %}checked{% endif %}> Show Ceremony
+            </label>
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;cursor:pointer;">
+                <input type="checkbox" name="show_reception" {% if wedding_config.show_reception %}checked{% endif %}> Show Reception
+            </label>
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;cursor:pointer;">
+                <input type="checkbox" name="show_after_party" {% if wedding_config.show_after_party %}checked{% endif %}> Show After Party
+            </label>
+        </div>
+
+        <!-- Ceremony -->
+        <div id="section-ceremony">
+        <p style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--admin-text-light);margin:0 0 0.75rem;">Ceremony</p>
+        <div class="fg2">
+            <div class="form-group">
+                <label for="ceremony_location">Location Name</label>
+                <input type="text" id="ceremony_location" name="ceremony_location" value="{{ wedding_config.ceremony_location }}" placeholder="e.g., St. Mary's Church">
+            </div>
+            <div class="datetime-field" style="margin-bottom:1.25rem;">
+                <label for="ceremony_time">Time</label>
+                <input type="time" id="ceremony_time" name="ceremony_time" value="{{ ceremony_time_value }}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Map Location <span style="font-weight:400;color:var(--admin-text-light);">- search by name or address</span></label>
+            <div class="loc-picker" id="picker-ceremony">
+                <div class="loc-search-row">
+                    <input type="text" class="loc-search" placeholder="Enter a location…" autocomplete="off"
+                        value="{% if wedding_config.ceremony_lat and wedding_config.ceremony_lng %}{{ wedding_config.ceremony_location }}{% endif %}">
+                    <button type="button" class="loc-search-btn">Search</button>
+                </div>
+                <div class="loc-body" id="body-ceremony">
+                    <div class="loc-map" id="map-ceremony"></div>
+                    <div class="loc-coords" id="coords-ceremony"></div>
+                </div>
+                <div class="loc-saved" id="saved-ceremony">
+                    {% if wedding_config.ceremony_lat and wedding_config.ceremony_lng %}✔ Pinned: {{ "%.5f"|format(wedding_config.ceremony_lat) }}, {{ "%.5f"|format(wedding_config.ceremony_lng) }}{% endif %}
+                </div>
+                <input type="hidden" name="ceremony_lat" id="ceremony_lat" value="{{ wedding_config.ceremony_lat or '' }}">
+                <input type="hidden" name="ceremony_lng" id="ceremony_lng" value="{{ wedding_config.ceremony_lng or '' }}">
+            </div>
+        </div>
+        </div><!-- /section-ceremony -->
+
+        <!-- Reception -->
+        <div id="section-reception">
+        <p style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--admin-text-light);margin:1.5rem 0 0.75rem;">Reception</p>
+        <div class="fg2">
+            <div class="form-group">
+                <label for="reception_location">Location Name</label>
+                <input type="text" id="reception_location" name="reception_location" value="{{ wedding_config.reception_location }}" placeholder="e.g., Grand Ballroom">
+            </div>
+            <div class="datetime-field" style="margin-bottom:1.25rem;">
+                <label for="reception_time">Time</label>
+                <input type="time" id="reception_time" name="reception_time" value="{{ reception_time_value }}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Map Location <span style="font-weight:400;color:var(--admin-text-light);">- search by name or address</span></label>
+            <div class="loc-picker" id="picker-reception">
+                <div class="loc-search-row">
+                    <input type="text" class="loc-search" placeholder="Enter a location…" autocomplete="off"
+                        value="{% if wedding_config.reception_lat and wedding_config.reception_lng %}{{ wedding_config.reception_location }}{% endif %}">
+                    <button type="button" class="loc-search-btn">Search</button>
+                </div>
+                <div class="loc-body" id="body-reception">
+                    <div class="loc-map" id="map-reception"></div>
+                    <div class="loc-coords" id="coords-reception"></div>
+                </div>
+                <div class="loc-saved" id="saved-reception">
+                    {% if wedding_config.reception_lat and wedding_config.reception_lng %}✔ Pinned: {{ "%.5f"|format(wedding_config.reception_lat) }}, {{ "%.5f"|format(wedding_config.reception_lng) }}{% endif %}
+                </div>
+                <input type="hidden" name="reception_lat" id="reception_lat" value="{{ wedding_config.reception_lat or '' }}">
+                <input type="hidden" name="reception_lng" id="reception_lng" value="{{ wedding_config.reception_lng or '' }}">
+            </div>
+        </div>
+        </div><!-- /section-reception -->
+
+        <!-- After Party -->
+        <div id="section-after-party">
+        <p style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--admin-text-light);margin:1.5rem 0 0.75rem;">After Party</p>
+        <div class="fg2">
+            <div class="form-group">
+                <label for="after_party_location">Location Name</label>
+                <input type="text" id="after_party_location" name="after_party_location" value="{{ wedding_config.after_party_location or '' }}" placeholder="e.g., The Rooftop Bar">
+            </div>
+            <div class="datetime-field" style="margin-bottom:1.25rem;">
+                <label for="after_party_time">Time</label>
+                <input type="time" id="after_party_time" name="after_party_time" value="{{ after_party_time_value }}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Map Location <span style="font-weight:400;color:var(--admin-text-light);">- search by name or address</span></label>
+            <div class="loc-picker" id="picker-after-party">
+                <div class="loc-search-row">
+                    <input type="text" class="loc-search" placeholder="Enter a location…" autocomplete="off"
+                        value="{% if wedding_config.after_party_lat and wedding_config.after_party_lng %}{{ wedding_config.after_party_location }}{% endif %}">
+                    <button type="button" class="loc-search-btn">Search</button>
+                </div>
+                <div class="loc-body" id="body-after-party">
+                    <div class="loc-map" id="map-after-party"></div>
+                    <div class="loc-coords" id="coords-after-party"></div>
+                </div>
+                <div class="loc-saved" id="saved-after-party">
+                    {% if wedding_config.after_party_lat and wedding_config.after_party_lng %}✔ Pinned: {{ "%.5f"|format(wedding_config.after_party_lat) }}, {{ "%.5f"|format(wedding_config.after_party_lng) }}{% endif %}
+                </div>
+                <input type="hidden" name="after_party_lat" id="after_party_lat" value="{{ wedding_config.after_party_lat or '' }}">
+                <input type="hidden" name="after_party_lng" id="after_party_lng" value="{{ wedding_config.after_party_lng or '' }}">
+            </div>
+        </div>
+        </div><!-- /section-after-party -->
+
+        </div><!-- /card -->
+
+        <div class="settings-card">
+        <p class="settings-card-title">Registry</p>
+        <div style="margin-bottom:1.2rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;cursor:pointer;">
+                <input type="checkbox" name="show_registry" {% if wedding_config.show_registry %}checked{% endif %}> Show Registry on wedding details page
+            </label>
+        </div>
+        <div class="fg2">
+            <div class="form-group">
+                <label for="registry_name">Registry Name / Description</label>
+                <input type="text" id="registry_name" name="registry_name" value="{{ wedding_config.registry_name or '' }}" placeholder="e.g., We're registered at Amazon">
+            </div>
+            <div class="form-group">
+                <label for="registry_url">Registry URL <span style="font-weight:400;color:var(--admin-text-light);">(optional)</span></label>
+                <input type="url" id="registry_url" name="registry_url" value="{{ wedding_config.registry_url or '' }}" placeholder="https://..." autocomplete="url">
+            </div>
+        </div>
+        </div><!-- /card -->
+
+    </div><!-- /tab-couple -->
+
+    <!-- ═══════════════════════════════════════════════════════
+         TAB 2 · APPEARANCE
+         ═══════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-appearance" role="tabpanel">
+
+        <div class="settings-card">
+        <p class="settings-card-title">Layout</p>
+        <p style="font-size:0.83rem;color:var(--admin-text-light);margin-bottom:1.5rem;">
+            Choose the overall page structure. Previews update live as you change colours below.
+        </p>
+
+        <input type="hidden" id="site_layout" name="site_layout" value="{{ wedding_config.site_layout or 'classic' }}">
+
+        <div class="layout-picker" id="layoutPicker">
+
+            <!-- Classic -->
+            <div class="layout-card {% if (wedding_config.site_layout or 'classic') == 'classic' %}selected{% endif %}"
+                 data-layout="classic" tabindex="0" role="radio"
+                 aria-checked="{{ 'true' if (wedding_config.site_layout or 'classic') == 'classic' else 'false' }}">
+                <div class="lc-check" aria-hidden="true">&#10003;</div>
+                <div class="mini-browser" aria-hidden="true">
+                    <div class="mini-chrome">
+                        <div class="mc-dot"></div><div class="mc-dot"></div><div class="mc-dot"></div>
+                        <div class="mc-bar"></div>
+                    </div>
+                    <div class="mini-site pv-classic">
+                        <div class="pv-nav">
+                            <div class="pv-brand"></div>
+                            <div class="pv-links"><span></span><span></span><span></span><span></span></div>
+                        </div>
+                        <div class="pv-hero">
+                            <div class="pv-hero-text">J &amp; S</div>
+                            <div class="pv-rule"></div>
+                            <div class="pv-sub">2026</div>
+                        </div>
+                        <div class="pv-section">
+                            <div class="pv-card"></div>
+                            <div class="pv-card"></div>
+                            <div class="pv-card"></div>
+                        </div>
+                        <div class="pv-footer"></div>
+                    </div>
+                </div>
+                <div class="layout-card-info">
+                    <strong>Classic</strong>
+                    <span>Traditional &middot; Centered &middot; Warm</span>
+                </div>
+            </div>
+
+            <!-- Editorial -->
+            <div class="layout-card {% if wedding_config.site_layout == 'editorial' %}selected{% endif %}"
+                 data-layout="editorial" tabindex="0" role="radio"
+                 aria-checked="{{ 'true' if wedding_config.site_layout == 'editorial' else 'false' }}">
+                <div class="lc-check" aria-hidden="true">&#10003;</div>
+                <div class="mini-browser" aria-hidden="true">
+                    <div class="mini-chrome">
+                        <div class="mc-dot"></div><div class="mc-dot"></div><div class="mc-dot"></div>
+                        <div class="mc-bar"></div>
+                    </div>
+                    <div class="mini-site pv-editorial">
+                        <div class="pv-nav">
+                            <div class="pv-brand"></div>
+                            <div class="pv-links"><span></span><span></span><span></span><span></span></div>
+                        </div>
+                        <div class="pv-hero">
+                            <div class="pv-hero-text">J &amp; S</div>
+                            <div class="pv-rule"></div>
+                            <div class="pv-sub">MMXXVI</div>
+                        </div>
+                        <div class="pv-section">
+                            <div class="pv-card"></div>
+                            <div class="pv-card"></div>
+                            <div class="pv-card"></div>
+                        </div>
+                        <div class="pv-footer"></div>
+                    </div>
+                </div>
+                <div class="layout-card-info">
+                    <strong>Editorial</strong>
+                    <span>Magazine &middot; Bold &middot; Left-aligned</span>
+                </div>
+            </div>
+
+            <!-- Minimal -->
+            <div class="layout-card {% if wedding_config.site_layout == 'minimal' %}selected{% endif %}"
+                 data-layout="minimal" tabindex="0" role="radio"
+                 aria-checked="{{ 'true' if wedding_config.site_layout == 'minimal' else 'false' }}">
+                <div class="lc-check" aria-hidden="true">&#10003;</div>
+                <div class="mini-browser" aria-hidden="true">
+                    <div class="mini-chrome">
+                        <div class="mc-dot"></div><div class="mc-dot"></div><div class="mc-dot"></div>
+                        <div class="mc-bar"></div>
+                    </div>
+                    <div class="mini-site pv-minimal">
+                        <div class="pv-nav">
+                            <div class="pv-brand"></div>
+                            <div class="pv-links"><span></span><span></span><span></span><span></span></div>
+                        </div>
+                        <div class="pv-hero">
+                            <div class="pv-hero-text">J &amp; S</div>
+                            <div class="pv-rule"></div>
+                            <div class="pv-sub">2026</div>
+                        </div>
+                        <div class="pv-section">
+                            <div class="pv-card"></div>
+                            <div class="pv-card"></div>
+                            <div class="pv-card"></div>
+                        </div>
+                        <div class="pv-footer"></div>
+                    </div>
+                </div>
+                <div class="layout-card-info">
+                    <strong>Minimal</strong>
+                    <span>Sparse &middot; Typographic &middot; Refined</span>
+                </div>
+            </div>
+
+            <!-- Romantic -->
+            <div class="layout-card {% if wedding_config.site_layout == 'romantic' %}selected{% endif %}"
+                 data-layout="romantic" tabindex="0" role="radio"
+                 aria-checked="{{ 'true' if wedding_config.site_layout == 'romantic' else 'false' }}">
+                <div class="lc-check" aria-hidden="true">&#10003;</div>
+                <div class="mini-browser" aria-hidden="true">
+                    <div class="mini-chrome">
+                        <div class="mc-dot"></div><div class="mc-dot"></div><div class="mc-dot"></div>
+                        <div class="mc-bar"></div>
+                    </div>
+                    <div class="mini-site pv-romantic">
+                        <div class="pv-nav">
+                            <div class="pv-brand"></div>
+                            <div class="pv-links"><span></span><span></span><span></span><span></span></div>
+                        </div>
+                        <div class="pv-hero">
+                            <div class="pv-hero-text">J &amp; S</div>
+                            <div class="pv-rule"></div>
+                            <div class="pv-sub">2026</div>
+                        </div>
+                        <div class="pv-section">
+                            <div class="pv-card"></div>
+                            <div class="pv-card"></div>
+                            <div class="pv-card"></div>
+                        </div>
+                        <div class="pv-footer"></div>
+                    </div>
+                </div>
+                <div class="layout-card-info">
+                    <strong>Romantic</strong>
+                    <span>Soft &middot; Rounded &middot; Heartfelt</span>
+                </div>
+            </div>
+
+            <!-- Luxe -->
+            <div class="layout-card {% if wedding_config.site_layout == 'luxe' %}selected{% endif %}"
+                 data-layout="luxe" tabindex="0" role="radio"
+                 aria-checked="{{ 'true' if wedding_config.site_layout == 'luxe' else 'false' }}">
+                <div class="lc-check" aria-hidden="true">&#10003;</div>
+                <div class="mini-browser" aria-hidden="true">
+                    <div class="mini-chrome">
+                        <div class="mc-dot"></div><div class="mc-dot"></div><div class="mc-dot"></div>
+                        <div class="mc-bar"></div>
+                    </div>
+                    <div class="mini-site pv-luxe">
+                        <div class="pv-nav">
+                            <div class="pv-brand"></div>
+                            <div class="pv-links"><span></span><span></span><span></span><span></span></div>
+                        </div>
+                        <div class="pv-hero">
+                            <div class="pv-hero-text">J &amp; S</div>
+                            <div class="pv-rule"></div>
+                            <div class="pv-sub">MMXXVI</div>
+                        </div>
+                        <div class="pv-section">
+                            <div class="pv-card"></div>
+                            <div class="pv-card"></div>
+                            <div class="pv-card"></div>
+                        </div>
+                        <div class="pv-footer"></div>
+                    </div>
+                </div>
+                <div class="layout-card-info">
+                    <strong>Luxe</strong>
+                    <span>Dark &middot; Moody &middot; Gold-accented</span>
+                </div>
+            </div>
+
+        </div><!-- /layout-picker -->
+        </div><!-- /card -->
+
+        <div class="settings-card">
+        <p class="settings-card-title">Colour Palette</p>
+        <p style="font-size:0.83rem;color:var(--admin-text-light);margin-bottom:1rem;">
+            Apply a quick preset or fine-tune individual colours. The layout previews above update instantly.
+        </p>
+
+        <div class="preset-strip" id="presetStrip">
+            <button type="button" class="preset-chip" data-theme="classic">
+                <div class="chip-dot" style="background:#2d5016;"></div> Classic Green
+            </button>
+            <button type="button" class="preset-chip" data-theme="royal">
+                <div class="chip-dot" style="background:#1e3a5f;"></div> Royal Blue
+            </button>
+            <button type="button" class="preset-chip" data-theme="blush">
+                <div class="chip-dot" style="background:#8b4a6a;"></div> Rose Blush
+            </button>
+            <button type="button" class="preset-chip" data-theme="elegant">
+                <div class="chip-dot" style="background:#1a1a1a;"></div> Black &amp; Gold
+            </button>
+            <button type="button" class="preset-chip" data-theme="autumn">
+                <div class="chip-dot" style="background:#8b5a2b;"></div> Autumn Harvest
+            </button>
+            <button type="button" class="preset-chip" data-theme="ocean">
+                <div class="chip-dot" style="background:#0e4c7a;"></div> Ocean Breeze
+            </button>
+        </div>
+
+        <div class="color-grid" id="colorPickers">
+            <div class="color-swatch">
+                <label for="primary_color">Primary Colour</label>
+                <input type="color" id="primary_color" name="primary_color" value="{{ wedding_config.primary_color }}">
+            </div>
+            <div class="color-swatch">
+                <label for="primary_text_color">Primary Text (Hero)</label>
+                <input type="color" id="primary_text_color" name="primary_text_color" value="{{ wedding_config.primary_text_color }}">
+            </div>
+            <div class="color-swatch">
+                <label for="accent_color">Accent Colour</label>
+                <input type="color" id="accent_color" name="accent_color" value="{{ wedding_config.accent_color }}">
+            </div>
+            <div class="color-swatch">
+                <label for="gold_accent">Highlight / Gold</label>
+                <input type="color" id="gold_accent" name="gold_accent" value="{{ wedding_config.gold_accent }}">
+            </div>
+            <div class="color-swatch">
+                <label for="nav_text_color">Nav Text Colour</label>
+                <input type="color" id="nav_text_color" name="nav_text_color" value="{{ wedding_config.nav_text_color }}">
+            </div>
+            <div class="color-swatch">
+                <label for="button_color">Button Colour</label>
+                <input type="color" id="button_color" name="button_color" value="{{ wedding_config.button_color }}">
+            </div>
+            <div class="color-swatch">
+                <label for="footer_background_color">Footer Background</label>
+                <input type="color" id="footer_background_color" name="footer_background_color" value="{{ wedding_config.footer_background_color }}">
+            </div>
+            <div class="color-swatch">
+                <label for="footer_text_color">Footer Text</label>
+                <input type="color" id="footer_text_color" name="footer_text_color" value="{{ wedding_config.footer_text_color }}">
+            </div>
+        </div>
+        </div><!-- /card -->
+
+    </div><!-- /tab-appearance -->
+
+    <!-- ═══════════════════════════════════════════════════════
+         TAB 3 · SITE & FEATURES
+         ═══════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-site" role="tabpanel">
+
+        <div class="settings-card">
+        <p class="settings-card-title">Site Identity</p>
+        <div class="fg2">
+            <div class="form-group">
+                <label for="site_title">Site Title</label>
+                <input type="text" id="site_title" name="site_title" value="{{ wedding_config.site_title }}">
+            </div>
+            <div class="form-group">
+                <label for="footer_domain">Domain Name</label>
+                <input type="text" id="footer_domain" name="footer_domain" value="{{ wedding_config.footer_domain or '' }}" placeholder="e.g., yourwedding.com">
+            </div>
+        </div>
+        </div><!-- /card -->
+
+        <div class="settings-card">
+        <p class="settings-card-title">Favicon</p>
+        <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+            {% if wedding_config.favicon_filename %}
+            <img src="{{ url_for('static', filename='uploads/favicon/' + wedding_config.favicon_filename) }}"
+                 alt="Current favicon" style="width:48px;height:48px;object-fit:contain;border:1px solid var(--admin-border);border-radius:6px;padding:4px;background:#fff;">
+            <div>
+                <p style="margin:0 0 0.35rem;font-size:0.875rem;">Current: <code>{{ wedding_config.favicon_filename }}</code></p>
+                <button type="submit" form="favDeleteForm" class="btn btn-danger" style="font-size:0.8rem;padding:0.3rem 0.75rem;">Remove</button>
+            </div>
+            {% else %}
+            <div style="width:48px;height:48px;border:2px dashed var(--admin-border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🥂</div>
+            <p style="margin:0;font-size:0.875rem;color:var(--admin-text-muted);">Using default emoji favicon.</p>
+            {% endif %}
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+            <input type="file" name="favicon" form="favUploadForm" accept=".ico,.png,.jpg,.jpeg,.svg"
+                   style="font-size:0.875rem;padding:0.35rem;border:1px solid var(--admin-border);border-radius:6px;background:#fff;">
+            <button type="submit" form="favUploadForm" class="btn btn-secondary" style="font-size:0.85rem;">Upload Favicon</button>
+        </div>
+        <p style="margin:0.5rem 0 0;font-size:0.78rem;color:var(--admin-text-muted);">Accepted formats: .ico, .png, .jpg, .svg &nbsp;·&nbsp; Recommended size: 32×32 or 64×64 px.</p>
+        </div><!-- /card -->
+
+        <div class="settings-card">
+        <p class="settings-card-title">Live Stream (Twitch)</p>
+        <div class="form-group">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;cursor:pointer;">
+                <input type="checkbox" name="twitch_enabled" {% if wedding_config.twitch_enabled %}checked{% endif %}>
+                Enable live stream page
+            </label>
+        </div>
+        <div class="form-group">
+            <label for="twitch_channel">Twitch Channel Name</label>
+            <input type="text" id="twitch_channel" name="twitch_channel" value="{{ wedding_config.twitch_channel or '' }}" placeholder="your-channel-name">
+        </div>
+        </div><!-- /card -->
+
+        <div class="settings-card">
+        <p class="settings-card-title">Photo Challenge &amp; Gallery</p>
+        <div class="form-group" style="margin-bottom:1rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;cursor:pointer;font-weight:600;">
+                <input type="checkbox" id="photo_challenge_enabled" name="photo_challenge_enabled"
+                       {% if wedding_config.photo_challenge_enabled is not false %}checked{% endif %}>
+                Enable Photo Challenge and Gallery pages
+            </label>
+        </div>
+        <div id="pc-settings-section">
+            <div class="form-group" style="margin-bottom:0.75rem;">
+                <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:0.5rem;">Unlock date</label>
+                <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                    <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;cursor:pointer;">
+                        <input type="radio" name="photo_challenge_unlock_mode" value="wedding_day"
+                               {% if (wedding_config.photo_challenge_unlock_mode or 'wedding_day') == 'wedding_day' %}checked{% endif %}>
+                        Wedding day (uses the date set in Couple &amp; Event)
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;cursor:pointer;">
+                        <input type="radio" name="photo_challenge_unlock_mode" value="custom"
+                               {% if wedding_config.photo_challenge_unlock_mode == 'custom' %}checked{% endif %}>
+                        Custom date &amp; time
+                    </label>
+                </div>
+            </div>
+            <div id="pc-custom-date" style="max-width:260px;">
+                <label for="photo_challenge_unlock_date" style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:0.35rem;">Custom unlock date &amp; time</label>
+                <input type="datetime-local" id="photo_challenge_unlock_date" name="photo_challenge_unlock_date"
+                       value="{{ wedding_config.photo_challenge_unlock_date.strftime('%Y-%m-%dT%H:%M') if wedding_config.photo_challenge_unlock_date else '' }}"
+                       style="width:100%;padding:0.55rem 0.7rem;border:1.5px solid var(--admin-border);border-radius:7px;font-size:0.9rem;font-family:inherit;background:#fff;color:var(--admin-text-dark);">
+            </div>
+        </div><!-- /pc-settings-section -->
+        </div><!-- /card -->
+
+        <div class="settings-card">
+        <p class="settings-card-title">Password Protection</p>
+        <div class="form-group">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;cursor:pointer;">
+                <input type="checkbox" name="site_password_protected" {% if wedding_config.site_password_protected %}checked{% endif %}>
+                Require a password to view the site
+            </label>
+        </div>
+        <div class="form-group" style="max-width:400px;">
+            <label for="site_password">Site Password</label>
+            <input type="password" id="site_password" name="site_password" placeholder="Leave blank to keep current password">
+        </div>
+        </div><!-- /card -->
+
+        <div class="settings-card">
+        <p class="settings-card-title">Admin Panel</p>
+        <div class="form-group">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;cursor:pointer;">
+                <input type="checkbox" name="show_admin_link" {% if wedding_config.show_admin_link %}checked{% endif %}>
+                Show "Admin" link in the public navigation menu
+            </label>
+            <p style="margin:0.5rem 0 0;font-size:0.8rem;color:var(--admin-text-muted);">
+                The admin panel is always available at <strong>{{ request.host_url }}admin</strong>
+            </p>
+        </div>
+        </div><!-- /card -->
+
+    </div><!-- /tab-site -->
+
+    <!-- ═══════════════════════════════════════════════════════
+         TAB 4 · EMAIL
+         ═══════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-email" role="tabpanel">
+
+        <div class="settings-card">
+        <p class="settings-card-title">Notifications</p>
+        <p style="margin:0 0 1.25rem;font-size:0.875rem;color:var(--admin-text-muted);">Where emails are delivered and how they appear to recipients.</p>
+        <div class="fg2">
+            <div class="form-group">
+                <label for="mail_contact_email">Notification Recipient</label>
+                <input type="email" id="mail_contact_email" name="mail_contact_email"
+                       value="{{ wedding_config.mail_contact_email or '' }}"
+                       placeholder="admin@example.com" autocomplete="off">
+                <small style="color:var(--admin-text-muted);">Where RSVP and contact form submissions are sent.</small>
+            </div>
+            <div class="form-group">
+                <label for="mail_sender_name">Sender Display Name</label>
+                <input type="text" id="mail_sender_name" name="mail_sender_name"
+                       value="{{ wedding_config.mail_sender_name or '' }}"
+                       placeholder="e.g., Alex &amp; Jordan">
+                <small style="color:var(--admin-text-muted);">Shown as the &ldquo;From&rdquo; name in email clients.</small>
+            </div>
+        </div>
+        <div class="form-group" style="max-width:420px;">
+            <label for="mail_sender_email">Sender Email Address</label>
+            <input type="email" id="mail_sender_email" name="mail_sender_email"
+                   value="{{ wedding_config.mail_sender_email or '' }}"
+                   placeholder="noreply@example.com" autocomplete="off">
+            <small style="color:var(--admin-text-muted);">The &ldquo;From&rdquo; address - usually matches SMTP username.</small>
+        </div>
+        </div><!-- /card -->
+
+        <div class="settings-card">
+        <p class="settings-card-title">SMTP Server</p>
+        <p style="margin:0 0 1.25rem;font-size:0.875rem;color:var(--admin-text-muted);">Outgoing mail server. For authenticated delivery (Gmail, etc.) enable Auth and use an <a href="https://support.google.com/accounts/answer/185833" target="_blank" rel="noopener" style="color:var(--admin-accent);">App Password</a>. Disable Auth for plain unauthenticated relay on port 25.</p>
+
+        <div class="form-group" style="max-width:420px;">
+            <label for="mail_smtp_server">SMTP Server</label>
+            <input type="text" id="mail_smtp_server" name="mail_smtp_server"
+                   value="{{ wedding_config.mail_smtp_server or '' }}"
+                   placeholder="smtp.example.com" autocomplete="off">
+        </div>
+
+        <!-- ── Authentication toggle ────────────────────────────── -->
+        <div class="form-group" style="margin-bottom:1rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;cursor:pointer;font-weight:600;">
+                <input type="checkbox" id="mail_auth_enabled" name="mail_auth_enabled"
+                       {% if wedding_config.mail_auth_enabled is not false %}checked{% endif %}>
+                Authentication &nbsp;<span style="font-weight:400;color:var(--admin-text-muted);">(uncheck for plain unauthenticated SMTP)</span>
+            </label>
+        </div>
+
+        <!-- ── Auth details (hidden when auth is off) ─────────────── -->
+        <div id="smtp-auth-section">
+            <div class="fg2">
+                <div class="form-group">
+                    <label for="mail_smtp_username">SMTP Username</label>
+                    <input type="email" id="mail_smtp_username" name="mail_smtp_username"
+                           value="{{ wedding_config.mail_smtp_username or '' }}"
+                           placeholder="your-email@example.com" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="mail_smtp_password">SMTP Password / App Password</label>
+                    <input type="password" id="mail_smtp_password" name="mail_smtp_password"
+                           placeholder="Leave blank to keep current" autocomplete="new-password">
+                </div>
+            </div>
+            <div class="form-group" style="max-width:fit-content;">
+                <label for="mail_security">Security</label>
+                <select id="mail_security" name="mail_security"
+                        style="width:auto;min-width:220px;padding:0.45rem 0.65rem;border:1px solid var(--admin-border);border-radius:6px;background:var(--admin-input-bg);color:var(--admin-text);font-size:0.9rem;">
+                    <option value="tls"      {% if (wedding_config.mail_security or 'tls') == 'tls' %}selected{% endif %}>TLS (SSL) - default port 465</option>
+                    <option value="starttls" {% if wedding_config.mail_security == 'starttls' %}selected{% endif %}>STARTTLS - default port 587</option>
+                </select>
+            </div>
+        </div><!-- /smtp-auth-section -->
+
+        <!-- ── Port override ────────────────────────────────────── -->
+        <div class="form-group" style="margin-top:0.75rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.9rem;cursor:pointer;margin-bottom:0.5rem;">
+                <input type="checkbox" id="mail_port_override" name="mail_port_override">
+                Override port &nbsp;<span id="smtp-default-port-hint" style="font-weight:400;color:var(--admin-text-muted);"></span>
+            </label>
+            <input type="number" id="mail_smtp_port" name="mail_smtp_port"
+                   value="{{ wedding_config.mail_smtp_port or '' }}"
+                   min="1" max="65535" style="max-width:110px;"
+                   placeholder="port">
+        </div>
+
+        </div><!-- /card -->
+
+    </div><!-- /tab-email -->
+
+    <!-- Sticky save bar -->
+    <div class="save-bar">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary"
+           style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">Cancel</a>
+    </div>
+
+</form>
+
+{# Favicon forms live OUTSIDE the main settings form to prevent nested-form HTML parsing issues #}
+{% if wedding_config.favicon_filename %}
+<form id="favDeleteForm" method="POST" action="{{ url_for('admin_favicon_delete') }}" style="display:none;"></form>
+{% endif %}
+<form id="favUploadForm" method="POST" action="{{ url_for('admin_favicon_upload') }}" enctype="multipart/form-data" style="display:none;"></form>
+
+<script>
+/* ── Tab switching ──────────────────────────────────────── */
+/* ── Flatpickr init ────────────────────────────────────── */
+flatpickr('#wedding_date', {
+    dateFormat: 'Y-m-d',
+    allowInput: true,
+    disableMobile: false
+});
+flatpickr('#wedding_time', {
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: 'H:i',
+    time_24hr: true,
+    minuteIncrement: 5,
+    allowInput: true
+});
+flatpickr('#ceremony_time', {
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: 'H:i',
+    time_24hr: true,
+    minuteIncrement: 5,
+    allowInput: true
+});
+flatpickr('#reception_time', {
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: 'H:i',
+    time_24hr: true,
+    minuteIncrement: 5,
+    allowInput: true
+});
+flatpickr('#after_party_time', {
+    enableTime: true,
+    noCalendar: true,
+    dateFormat: 'H:i',
+    time_24hr: true,
+    minuteIncrement: 5,
+    allowInput: true
+});
+
+/* ── Location map pickers ───────────────────────────────── */
+(function() {
+    var pickers = [
+        {
+            mapId: 'map-ceremony',
+            bodyId: 'body-ceremony',
+            coordsId: 'coords-ceremony',
+            savedId: 'saved-ceremony',
+            latId: 'ceremony_lat',
+            lngId: 'ceremony_lng',
+            pickerId: 'picker-ceremony',
+            initLat: {{ wedding_config.ceremony_lat or 'null' }},
+            initLng: {{ wedding_config.ceremony_lng or 'null' }}
+        },
+        {
+            mapId: 'map-reception',
+            bodyId: 'body-reception',
+            coordsId: 'coords-reception',
+            savedId: 'saved-reception',
+            latId: 'reception_lat',
+            lngId: 'reception_lng',
+            pickerId: 'picker-reception',
+            initLat: {{ wedding_config.reception_lat or 'null' }},
+            initLng: {{ wedding_config.reception_lng or 'null' }}
+        },
+        {
+            mapId: 'map-after-party',
+            bodyId: 'body-after-party',
+            coordsId: 'coords-after-party',
+            savedId: 'saved-after-party',
+            latId: 'after_party_lat',
+            lngId: 'after_party_lng',
+            pickerId: 'picker-after-party',
+            initLat: {{ wedding_config.after_party_lat or 'null' }},
+            initLng: {{ wedding_config.after_party_lng or 'null' }}
+        }
+    ];
+
+    pickers.forEach(function(cfg) {
+        var body       = document.getElementById(cfg.bodyId);
+        var savedEl    = document.getElementById(cfg.savedId);
+        var picker     = document.getElementById(cfg.pickerId);
+        var searchInput = picker.querySelector('.loc-search');
+        var searchBtn   = picker.querySelector('.loc-search-btn');
+
+        /* Show saved badge on load if a pin already exists */
+        if (cfg.initLat !== null && cfg.initLng !== null) {
+            savedEl.classList.add('visible');
+        }
+
+        /* Lazy-initialise the Leaflet map only when first opened */
+        var map = null;
+        var marker = null;
+        var mapReady = false;
+
+        function initMap() {
+            if (mapReady) return;
+            mapReady = true;
+            var center = cfg.initLat !== null ? [cfg.initLat, cfg.initLng] : [51.505, -0.09];
+            var zoom   = cfg.initLat !== null ? 15 : 4;
+            map = L.map(cfg.mapId).setView(center, zoom);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                maxZoom: 19
+            }).addTo(map);
+            if (cfg.initLat !== null && cfg.initLng !== null) {
+                marker = L.marker([cfg.initLat, cfg.initLng], {draggable: true}).addTo(map);
+                marker.on('dragend', function(e) { pinMoved(e.target.getLatLng()); });
+                showCoords(cfg.initLat, cfg.initLng);
+            }
+            map.on('click', function(e) {
+                placePin(e.latlng);
+                map.setView(e.latlng, Math.max(map.getZoom(), 15));
+            });
+        }
+
+        function showCoords(lat, lng) {
+            document.getElementById(cfg.coordsId).textContent =
+                '📍 ' + lat.toFixed(5) + ', ' + lng.toFixed(5) +
+                ' - drag pin or click map to adjust';
+        }
+
+        function pinMoved(latlng) {
+            document.getElementById(cfg.latId).value = latlng.lat.toFixed(6);
+            document.getElementById(cfg.lngId).value = latlng.lng.toFixed(6);
+            showCoords(latlng.lat, latlng.lng);
+            /* Switch button to OK now that a pin is placed */
+            searchBtn.textContent = 'OK';
+            searchBtn.classList.add('loc-btn-ok');
+        }
+
+        function placePin(latlng) {
+            if (marker) {
+                marker.setLatLng(latlng);
+            } else {
+                marker = L.marker(latlng, {draggable: true}).addTo(map);
+                marker.on('dragend', function(e) { pinMoved(e.target.getLatLng()); });
+            }
+            pinMoved(latlng);
+        }
+
+        function openMap() {
+            body.classList.add('open');
+            savedEl.classList.remove('visible');
+            initMap();
+            setTimeout(function() { if (map) map.invalidateSize(); }, 360);
+        }
+
+        function closeMap() {
+            body.classList.remove('open');
+            var lat = document.getElementById(cfg.latId).value;
+            var lng = document.getElementById(cfg.lngId).value;
+            if (lat && lng) {
+                savedEl.textContent = '✔ Pinned: ' + parseFloat(lat).toFixed(5) + ', ' + parseFloat(lng).toFixed(5);
+                savedEl.classList.add('visible');
+            }
+            searchBtn.textContent = 'Search';
+            searchBtn.classList.remove('loc-btn-ok');
+        }
+
+        function doSearch() {
+            var q = searchInput.value.trim();
+            if (!q) return;
+            searchBtn.textContent = '…';
+            searchBtn.disabled = true;
+            openMap();
+            fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q), {
+                headers: {'Accept-Language': 'en'}
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                searchBtn.disabled = false;
+                if (data && data.length > 0) {
+                    var lat = parseFloat(data[0].lat);
+                    var lng = parseFloat(data[0].lon);
+                    map.setView([lat, lng], 15);
+                    placePin(L.latLng(lat, lng));
+                    /* button now shows OK - set by placePin->pinMoved */
+                } else {
+                    searchBtn.textContent = 'Search';
+                    document.getElementById(cfg.coordsId).textContent =
+                        'No results found - try a different name or address.';
+                }
+            })
+            .catch(function() {
+                searchBtn.textContent = 'Search';
+                searchBtn.disabled = false;
+                document.getElementById(cfg.coordsId).textContent =
+                    'Search failed. Check your connection.';
+            });
+        }
+
+        searchBtn.addEventListener('click', function() {
+            if (searchBtn.classList.contains('loc-btn-ok')) {
+                closeMap();
+            } else {
+                doSearch();
+            }
+        });
+
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); doSearch(); }
+        });
+
+        /* When the search box is cleared, reset OK→Search */
+        searchInput.addEventListener('input', function() {
+            if (searchBtn.classList.contains('loc-btn-ok')) {
+                searchBtn.textContent = 'Search';
+                searchBtn.classList.remove('loc-btn-ok');
+            }
+        });
+
+        /* Invalidate map size when tab becomes visible */
+        document.querySelectorAll('.tab-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                if (map && body.classList.contains('open')) {
+                    setTimeout(function() { map.invalidateSize(); }, 50);
+                }
+            });
+        });
+    });
+})();
+
+/* ── Tab switching ──────────────────────────────────────── */
+document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var target = this.dataset.tab;
+        document.querySelectorAll('.tab-btn').forEach(function(b) {
+            b.classList.remove('active');
+            b.setAttribute('aria-selected', 'false');
+        });
+        document.querySelectorAll('.tab-panel').forEach(function(p) {
+            p.classList.remove('active');
+        });
+        this.classList.add('active');
+        this.setAttribute('aria-selected', 'true');
+        document.getElementById('tab-' + target).classList.add('active');
+    });
+});
+
+/* ── Layout card selection ──────────────────────────────── */
+document.querySelectorAll('.layout-card').forEach(function(card) {
+    function selectCard(c) {
+        document.querySelectorAll('.layout-card').forEach(function(x) {
+            x.classList.remove('selected');
+            x.setAttribute('aria-checked', 'false');
+        });
+        c.classList.add('selected');
+        c.setAttribute('aria-checked', 'true');
+        document.getElementById('site_layout').value = c.dataset.layout;
+    }
+    card.addEventListener('click', function() { selectCard(this); });
+    card.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            selectCard(this);
+        }
+    });
+});
+
+/* ── Live colour preview ────────────────────────────────── */
+function updatePreviews() {
+    var ids = [
+        ['--pv-primary',      'primary_color'],
+        ['--pv-primary-text', 'primary_text_color'],
+        ['--pv-accent',       'accent_color'],
+        ['--pv-gold',         'gold_accent'],
+        ['--pv-nav-text',     'nav_text_color'],
+        ['--pv-footer-bg',    'footer_background_color'],
+        ['--pv-footer-text',  'footer_text_color'],
+    ];
+    var parts = ids.map(function(pair) {
+        var el = document.getElementById(pair[1]);
+        return el ? (pair[0] + ':' + el.value) : '';
+    }).filter(Boolean);
+    var css = parts.join(';');
+    document.querySelectorAll('.mini-site').forEach(function(el) {
+        el.setAttribute('style', css);
+    });
+}
+
+updatePreviews();
+
+document.getElementById('colorPickers').querySelectorAll('input[type="color"]')
+    .forEach(function(inp) {
+        inp.addEventListener('input', updatePreviews);
+    });
+
+/* ── Colour presets ─────────────────────────────────────── */
+var themePresets = {
+    classic: {
+        primary_color: '#2d5016', primary_text_color: '#ffffff', accent_color: '#4a7c2c',
+        nav_text_color: '#2c3e50', button_color: '#2d5016', gold_accent: '#D4AF37',
+        footer_background_color: '#2c3e50', footer_text_color: '#ffffff'
+    },
+    royal: {
+        primary_color: '#1e3a5f', primary_text_color: '#ffffff', accent_color: '#2c5aa0',
+        nav_text_color: '#1e3a5f', button_color: '#1e3a5f', gold_accent: '#f0ad4e',
+        footer_background_color: '#1e3a5f', footer_text_color: '#ffffff'
+    },
+    blush: {
+        primary_color: '#8b4a6a', primary_text_color: '#ffffff', accent_color: '#d9a5b3',
+        nav_text_color: '#8b4a6a', button_color: '#8b4a6a', gold_accent: '#d4a574',
+        footer_background_color: '#8b4a6a', footer_text_color: '#ffffff'
+    },
+    elegant: {
+        primary_color: '#1a1a1a', primary_text_color: '#ffffff', accent_color: '#d4af37',
+        nav_text_color: '#1a1a1a', button_color: '#1a1a1a', gold_accent: '#d4af37',
+        footer_background_color: '#1a1a1a', footer_text_color: '#d4af37'
+    },
+    autumn: {
+        primary_color: '#8b5a2b', primary_text_color: '#ffffff', accent_color: '#d2691e',
+        nav_text_color: '#8b5a2b', button_color: '#8b5a2b', gold_accent: '#daa520',
+        footer_background_color: '#8b5a2b', footer_text_color: '#fef5e7'
+    },
+    ocean: {
+        primary_color: '#0e4c7a', primary_text_color: '#ffffff', accent_color: '#17a2b8',
+        nav_text_color: '#0e4c7a', button_color: '#0e4c7a', gold_accent: '#ffc107',
+        footer_background_color: '#0e4c7a', footer_text_color: '#e8f4f8'
+    }
+};
+
+document.getElementById('presetStrip').querySelectorAll('.preset-chip').forEach(function(chip) {
+    chip.addEventListener('click', function(e) {
+        e.preventDefault();
+        var theme = themePresets[this.dataset.theme];
+        if (!theme) return;
+        Object.keys(theme).forEach(function(key) {
+            var el = document.getElementById(key);
+            if (el) el.value = theme[key];
+        });
+        document.getElementById('presetStrip').querySelectorAll('.preset-chip')
+            .forEach(function(c) { c.classList.remove('active-preset'); });
+        this.classList.add('active-preset');
+        updatePreviews();
+    });
+});
+
+/* ── Event section show/hide ────────────────────────────── */
+(function () {
+    var sections = [
+        { checkbox: 'show_ceremony',    section: 'section-ceremony' },
+        { checkbox: 'show_reception',   section: 'section-reception' },
+        { checkbox: 'show_after_party', section: 'section-after-party' },
+    ];
+    sections.forEach(function (item) {
+        var chk = document.querySelector('input[name="' + item.checkbox + '"]');
+        var sec = document.getElementById(item.section);
+        if (!chk || !sec) return;
+        function sync() { sec.style.display = chk.checked ? '' : 'none'; }
+        chk.addEventListener('change', sync);
+        sync();
+    });
+})();
+
+/* ── Photo challenge enable / unlock mode ───────────────── */
+(function () {
+    var enableChk   = document.getElementById('photo_challenge_enabled');
+    var settingsSec = document.getElementById('pc-settings-section');
+    var radios      = document.querySelectorAll('input[name="photo_challenge_unlock_mode"]');
+    var customDiv   = document.getElementById('pc-custom-date');
+
+    function syncMode() {
+        var mode = 'wedding_day';
+        radios.forEach(function (r) { if (r.checked) mode = r.value; });
+        customDiv.style.display = mode === 'custom' ? '' : 'none';
+    }
+
+    function syncEnabled() {
+        settingsSec.style.display = enableChk.checked ? '' : 'none';
+    }
+
+    enableChk.addEventListener('change', syncEnabled);
+    radios.forEach(function (r) { r.addEventListener('change', syncMode); });
+
+    syncEnabled();
+    syncMode();
+})();
+
+/* ── SMTP auth / security / port controls ───────────────── */
+(function () {
+    var authCheck    = document.getElementById('mail_auth_enabled');
+    var authSection  = document.getElementById('smtp-auth-section');
+    var secSelect    = document.getElementById('mail_security');
+    var portOverride = document.getElementById('mail_port_override');
+    var portInput    = document.getElementById('mail_smtp_port');
+    var portHint     = document.getElementById('smtp-default-port-hint');
+
+    var DEFAULT_PORTS = { none: 25, tls: 465, starttls: 587 };
+
+    function getDefaultPort() {
+        if (!authCheck.checked) return DEFAULT_PORTS.none;
+        return DEFAULT_PORTS[secSelect.value] || 465;
+    }
+
+    function updateSmtp() {
+        var auth = authCheck.checked;
+
+        // Show/hide auth details
+        authSection.style.display = auth ? '' : 'none';
+
+        // Update port hint and field
+        var def = getDefaultPort();
+        portHint.textContent = '(default: ' + def + ')';
+
+        if (!portOverride.checked) {
+            portInput.value = '';
+            portInput.placeholder = String(def);
+            portInput.disabled = true;
+        } else {
+            portInput.disabled = false;
+            if (!portInput.value) portInput.value = def;
+        }
+    }
+
+    authCheck.addEventListener('change', updateSmtp);
+    secSelect.addEventListener('change', function () {
+        if (!portOverride.checked) updateSmtp();
+        else {
+            var def = getDefaultPort();
+            portHint.textContent = '(default: ' + def + ')';
+        }
+    });
+    portOverride.addEventListener('change', updateSmtp);
+
+    updateSmtp();
+})();
+</script>
+{% endblock %}

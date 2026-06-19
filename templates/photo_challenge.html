@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}Photo Challenge - {{ site_title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .challenge-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .countdown-container {
+        text-align: center;
+        padding: 3rem 2rem;
+        background-color: var(--bg-white);
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .countdown {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+    }
+    
+    .countdown-item {
+        text-align: center;
+    }
+    
+    .countdown-value {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        font-family: 'Cormorant Garamond', serif;
+    }
+    
+    .countdown-label {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        color: var(--text-light);
+        letter-spacing: 1px;
+    }
+    
+    .challenge-box {
+        background-color: var(--bg-white);
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .challenge-text {
+        font-size: 1.5rem;
+        color: var(--primary-color);
+        font-weight: 600;
+        text-align: center;
+        margin: 1.5rem 0;
+        padding: 1.5rem;
+        background-color: var(--bg-light);
+        border-radius: 5px;
+        border-left: 4px solid var(--accent-color);
+    }
+    
+    .upload-area {
+        border: 3px dashed var(--border-color);
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .upload-area:hover {
+        border-color: var(--primary-color);
+        background-color: var(--bg-light);
+    }
+    
+    .upload-area.dragover {
+        border-color: var(--accent-color);
+        background-color: var(--bg-light);
+    }
+    
+    .preview-image {
+        max-width: 100%;
+        max-height: 400px;
+        margin: 1rem 0;
+        border-radius: 10px;
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+    .alert {
+        padding: 1rem;
+        border-radius: 5px;
+        margin: 1rem 0;
+    }
+    
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .alert-error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>📸 Photo Challenge</h1>
+        <div class="decorative-line"></div>
+        <p>Help capture {{ couple_names }}'s special day!</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="challenge-container">
+        {% if not is_unlocked %}
+        <div class="countdown-container">
+            <h2>Coming Soon!</h2>
+            <p class="lead">The photo challenge will unlock on our wedding day</p>
+            
+            <div class="countdown" id="countdown">
+                <div class="countdown-item">
+                    <div class="countdown-value" id="days">--</div>
+                    <div class="countdown-label">Days</div>
+                </div>
+                <div class="countdown-item">
+                    <div class="countdown-value" id="hours">--</div>
+                    <div class="countdown-label">Hours</div>
+                </div>
+                <div class="countdown-item">
+                    <div class="countdown-value" id="minutes">--</div>
+                    <div class="countdown-label">Minutes</div>
+                </div>
+                <div class="countdown-item">
+                    <div class="countdown-value" id="seconds">--</div>
+                    <div class="countdown-label">Seconds</div>
+                </div>
+            </div>
+            
+         <!--   <p style="margin-top: 2rem;">Challenge codes will be handed out on the wedding day!</p> -->
+        </div>
+        {% else %}
+        <div id="name-form" class="challenge-box">
+            <h2>Welcome!</h2>
+            <p>Enter your name to receive your photo challenge:</p>
+            <div class="form-group">
+                <input type="text" id="guest-name" placeholder="Your Name" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 5px; font-size: 1rem;">
+            </div>
+            <button onclick="getChallenge()" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Get My Challenge</button>
+            <div id="name-error" class="alert alert-error hidden"></div>
+        </div>
+        
+        <div id="challenge-display" class="hidden">
+            <div class="challenge-box">
+                <h2>Hello, <span id="display-name"></span>! 👋</h2>
+                <p>Here's your photo challenge:</p>
+                <div class="challenge-text" id="challenge-text"></div>
+            </div>
+            
+            <div class="challenge-box">
+                <h3>Upload Your Photo</h3>
+                <div id="upload-area" class="upload-area">
+                    <input type="file" id="photo-input" accept="image/*" class="hidden">
+                    <p>📷 Click or drag & drop to upload</p>
+                    <p style="font-size: 0.9rem; color: var(--text-light);">Max file size: 16MB</p>
+                </div>
+                <img id="preview" class="preview-image hidden">
+                <button id="upload-btn" onclick="uploadPhoto()" class="btn btn-primary hidden" style="width: 100%; margin-top: 1rem;">Submit Photo</button>
+                <div id="upload-message" class="hidden"></div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 2rem;">
+                <a href="{{ url_for('gallery') }}" class="btn btn-primary">View Gallery</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{% if not is_unlocked %}
+<script>
+    // Countdown timer
+    const weddingDate = new Date("{{ wedding_datetime.strftime('%Y-%m-%d %H:%M:%S') }}").getTime();
+    
+    function updateCountdown() {
+        const now = new Date().getTime();
+        const distance = weddingDate - now;
+        
+        if (distance < 0) {
+            location.reload();
+            return;
+        }
+        
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        
+        document.getElementById('days').textContent = days;
+        document.getElementById('hours').textContent = hours;
+        document.getElementById('minutes').textContent = minutes;
+        document.getElementById('seconds').textContent = seconds;
+    }
+    
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+</script>
+{% else %}
+<script>
+    let currentChallenge = '';
+    let guestName = '';
+    let selectedFile = null;
+    
+    async function getChallenge() {
+        const nameInput = document.getElementById('guest-name');
+        const name = nameInput.value.trim();
+        const errorDiv = document.getElementById('name-error');
+        
+        if (!name) {
+            errorDiv.textContent = 'Please enter your name';
+            errorDiv.classList.remove('hidden');
+            return;
+        }
+        
+        errorDiv.classList.add('hidden');
+        
+        try {
+            const response = await fetch('/api/get-challenge', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: name})
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                guestName = data.guest_name;
+                currentChallenge = data.challenge;
+                
+                document.getElementById('display-name').textContent = guestName;
+                document.getElementById('challenge-text').textContent = currentChallenge;
+                document.getElementById('name-form').classList.add('hidden');
+                document.getElementById('challenge-display').classList.remove('hidden');
+            } else {
+                errorDiv.textContent = data.message;
+                errorDiv.classList.remove('hidden');
+            }
+        } catch (error) {
+            errorDiv.textContent = 'Error getting challenge. Please try again.';
+            errorDiv.classList.remove('hidden');
+        }
+    }
+    
+    // File upload handling
+    const uploadArea = document.getElementById('upload-area');
+    const photoInput = document.getElementById('photo-input');
+    const preview = document.getElementById('preview');
+    const uploadBtn = document.getElementById('upload-btn');
+    
+    uploadArea.addEventListener('click', () => photoInput.click());
+    
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            handleFile(file);
+        }
+    });
+    
+    photoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            handleFile(file);
+        }
+    });
+    
+    function handleFile(file) {
+        selectedFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+            uploadBtn.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    async function uploadPhoto() {
+        if (!selectedFile) return;
+        
+        const messageDiv = document.getElementById('upload-message');
+        const uploadBtn = document.getElementById('upload-btn');
+        
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = 'Uploading...';
+        
+        const formData = new FormData();
+        formData.append('photo', selectedFile);
+        formData.append('guest_name', guestName);
+        formData.append('challenge', currentChallenge);
+        
+        try {
+            const response = await fetch('/api/upload-photo', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            messageDiv.className = data.success ? 'alert alert-success' : 'alert alert-error';
+            messageDiv.textContent = data.message;
+            messageDiv.classList.remove('hidden');
+            
+            if (data.success) {
+                uploadBtn.textContent = 'Photo Uploaded! ✓';
+                setTimeout(() => {
+                    window.location.href = '/gallery';
+                }, 2000);
+            } else {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Submit Photo';
+            }
+        } catch (error) {
+            messageDiv.className = 'alert alert-error';
+            messageDiv.textContent = 'Error uploading photo. Please try again.';
+            messageDiv.classList.remove('hidden');
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Submit Photo';
+        }
+    }
+    
+    // Allow enter key to submit name
+    document.getElementById('guest-name').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            getChallenge();
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

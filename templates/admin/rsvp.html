@@ -1,0 +1,130 @@
+{% extends "admin/base.html" %}
+
+{% block title %}RSVPs{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <div>
+        <h1>RSVP Submissions</h1>
+        <p>All guest RSVPs in chronological order.</p>
+    </div>
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+        <a href="{{ url_for('rsvp_admin_qr_codes') }}" class="btn btn-secondary" style="text-decoration:none;">🖨 Print QR Codes</a>
+        <a href="{{ url_for('admin_rsvp_export') }}" class="btn btn-secondary" style="text-decoration:none;">⬇ Export CSV</a>
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('import-csv-panel').style.display = document.getElementById('import-csv-panel').style.display === 'none' ? 'block' : 'none'">
+            ⬆ Import CSV
+        </button>
+    </div>
+</div>
+
+<!-- CSV import panel (hidden by default) -->
+<div id="import-csv-panel" style="display:none;" class="card" style="margin-bottom:1.5rem;">
+    <h3 style="margin:0 0 0.75rem;">Bulk Import Guests from CSV</h3>
+    <p style="font-size:0.875rem;color:var(--admin-text-muted);margin:0 0 1rem;">
+        Upload a CSV file to add multiple guests at once. Each guest will automatically receive a unique QR code link.<br>
+        <strong>Required column:</strong> <code>names</code>.<br>
+        Optional columns: <code>email</code>, <code>phone</code>, <code>address</code>.
+        Column headers are case-insensitive and extra columns are ignored.
+    </p>
+    <details style="font-size:0.8rem;color:var(--admin-text-muted);margin-bottom:1rem;">
+        <summary style="cursor:pointer;font-weight:600;">Example CSV format</summary>
+        <pre style="background:#f8fafc;border:1px solid var(--admin-border);border-radius:6px;padding:0.75rem;margin-top:0.5rem;overflow-x:auto;font-size:0.8rem;">names,email,phone,address
+John &amp; Jane Smith,john@example.com,0400 123 456,"12 Main St, Springfield"
+Alice Johnson,alice@example.com,0411 222 333,"5 Oak Ave, Shelbyville"
+Bob &amp; Carol White,bob@example.com,,</pre>
+    </details>
+    <form method="POST" action="{{ url_for('admin_rsvp_import') }}" enctype="multipart/form-data" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end;">
+        <div style="flex:1;min-width:220px;">
+            <label for="csv_file" style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem;">CSV File</label>
+            <input type="file" id="csv_file" name="csv_file" accept=".csv" required
+                   style="display:block;width:100%;padding:0.5rem 0.6rem;border:1px solid var(--admin-border);border-radius:var(--radius-md);font-size:0.875rem;background:#fff;">
+        </div>
+        <button type="submit" class="btn btn-primary">Import Guests</button>
+    </form>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ rsvps|length }}</div>
+        <div class="stat-label">Total Submissions</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ confirmed }}</div>
+        <div class="stat-label">Confirmed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ pending }}</div>
+        <div class="stat-label">Pending</div>
+    </div>
+</div>
+
+<!-- Save-the-Date QR code for sharing -->
+<div class="card" style="margin-bottom:1.5rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+    <img src="{{ url_for('generate_save_qr') }}" alt="Save the Date QR Code"
+         style="width:120px;height:120px;border:1px solid var(--admin-border);border-radius:8px;flex-shrink:0;">
+    <div>
+        <h3 style="margin:0 0 0.35rem;font-size:1rem;">Save the Date QR Code</h3>
+        <p style="margin:0 0 0.6rem;font-size:0.875rem;color:var(--admin-text-muted);">
+            Share this QR code with guests so they can submit their address for a formal invitation.<br>
+            Direct link: <a href="{{ request.host_url }}save" target="_blank" style="color:var(--admin-accent);">{{ request.host_url }}save</a>
+        </p>
+        <a href="{{ url_for('download_save_qr') }}" class="btn btn-secondary" style="text-decoration:none;font-size:0.85rem;">⬇ Download for print</a>
+    </div>
+</div>
+
+{% if rsvps %}
+<div class="table-wrapper">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Name(s)</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Status</th>
+                <th>Submitted</th>
+                <th>QR Link</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rsvp in rsvps %}
+            <tr>
+                <td><strong>{{ rsvp.names }}</strong></td>
+                <td><a href="mailto:{{ rsvp.email }}" style="color: var(--primary-color); text-decoration: none;">{{ rsvp.email }}</a></td>
+                <td>{{ rsvp.phone }}</td>
+                <td style="font-size:0.85rem;">{{ rsvp.address or '' }}</td>
+                <td>
+                    {% if rsvp.rsvp_confirmed %}
+                    <span class="badge badge-success">✓ Confirmed</span>
+                    {% else %}
+                    <span class="badge badge-warning">⏳ Pending</span>
+                    {% endif %}
+                </td>
+                <td>{{ rsvp.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    <a href="{{ url_for('rsvp_confirm', code=rsvp.unique_code) }}" target="_blank"
+                       style="font-size:0.75rem;color:var(--admin-text-muted);font-family:monospace;word-break:break-all;">
+                        /rsvp/confirm/{{ rsvp.unique_code }}
+                    </a>
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin_rsvp_delete', rsvp_id=rsvp.id) }}"
+                          onsubmit="return confirm('Remove {{ rsvp.names }}? This cannot be undone.');">
+                        <button type="submit" style="padding:0.3rem 0.65rem;font-size:0.78rem;background:#fee2e2;color:#dc2626;border:1px solid #fecaca;border-radius:var(--radius-sm, 4px);cursor:pointer;font-family:inherit;">
+                            Delete
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card empty-state">
+    <h3>No RSVPs yet</h3>
+    <p>RSVP submissions will appear here once guests start responding, or import guests using the CSV button above.</p>
+</div>
+{% endif %}
+{% endblock %}

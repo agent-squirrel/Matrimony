@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Guest QR Codes - {{ site_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header no-print">
+    <div class="container">
+        <h1>🎟️ Guest QR Codes</h1>
+        <div class="decorative-line"></div>
+        <p>Print this page to create personalized QR codes for each guest's RSVP confirmation link.</p>
+        <div class="admin-actions">
+            <button onclick="window.print()" class="btn btn-primary">🖨️ Print QR Codes</button>
+            <a href="{{ url_for('rsvp_admin') }}" class="btn btn-secondary">← Back to Admin</a>
+        </div>
+    </div>
+</div>
+
+<section class="section qr-codes-section">
+    <div class="container">
+        {% if rsvps %}
+        <div class="qr-grid">
+            {% for rsvp in rsvps %}
+            <div class="qr-card">
+                <div class="guest-name">{{ rsvp.names }}</div>
+                <div class="rsvp-deadline">RSVP by 31st of July</div>
+                <img src="{{ url_for('generate_guest_qr', code=rsvp.unique_code) }}" alt="QR Code for {{ rsvp.names }}" class="qr-image">
+                <div class="rsvp-instructions">Scan the QR code or visit the link below to RSVP</div>
+                <div class="rsvp-link">https://{{ wedding_config.footer_domain }}/rsvp/confirm/{{ rsvp.unique_code }}</div>
+                <div class="confirmation-status">
+                    {% if rsvp.rsvp_confirmed %}
+                    <span class="status confirmed">✓ Confirmed</span>
+                    {% else %}
+                    <span class="status pending">Pending</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <h2>No Guests Yet</h2>
+            <p>QR codes will appear here once guests submit their Save the Date information.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<style>
+    /* Screen styles */
+    .qr-codes-section {
+        padding: 2rem 0;
+    }
+    
+    .qr-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 2rem;
+        padding: 1rem;
+    }
+    
+    .qr-card {
+        background: white;
+        border: 2px solid var(--primary-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    
+    .guest-name {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+        word-wrap: break-word;
+        line-height: 1.3;
+    }
+    
+    .rsvp-deadline {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #856404;
+        background: #fff3cd;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        margin-bottom: 0.75rem;
+        display: inline-block;
+    }
+    
+    .qr-image {
+        width: 150px;
+        height: 150px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+    }
+    
+    .rsvp-instructions {
+        font-size: 0.8rem;
+        color: #555;
+        margin-top: 0.75rem;
+        margin-bottom: 0.25rem;
+        font-style: italic;
+    }
+    
+    .rsvp-link {
+        font-size: 0.7rem;
+        color: #666;
+        margin-top: 0.5rem;
+        word-break: break-all;
+        font-family: monospace;
+        padding: 0.25rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+    
+    .confirmation-status {
+        margin-top: 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .confirmation-status .status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    
+    .confirmation-status .status.confirmed {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .confirmation-status .status.pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .admin-actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 5px;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-secondary:hover {
+        background: #5a6268;
+    }
+    
+    /* Print styles */
+    @media print {
+        /* Hide non-essential elements */
+        .no-print,
+        .page-header,
+        nav,
+        footer,
+        .navbar,
+        .site-footer {
+            display: none !important;
+        }
+        
+        body {
+            background: white !important;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .qr-codes-section {
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .qr-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding: 0.5rem;
+        }
+        
+        .qr-card {
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 0.75rem;
+            box-shadow: none;
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        
+        .guest-name {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+            color: black;
+        }
+        
+        .rsvp-deadline {
+            font-size: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: #eee;
+            color: #333;
+        }
+        
+        .qr-image {
+            width: 120px;
+            height: 120px;
+        }
+        
+        .rsvp-instructions {
+            font-size: 0.6rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.15rem;
+            color: #333;
+        }
+        
+        .rsvp-link {
+            font-size: 0.55rem;
+            margin-top: 0.25rem;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .confirmation-status {
+            display: none;
+        }
+        
+        /* Page setup */
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+    }
+</style>
+{% endblock %}

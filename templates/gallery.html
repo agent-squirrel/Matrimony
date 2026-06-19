@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}Photo Gallery - {{ site_title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 3rem;
+    }
+    
+    .gallery-item {
+        background-color: var(--bg-white);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .gallery-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .gallery-image {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        cursor: pointer;
+    }
+    
+    .gallery-info {
+        padding: 1rem;
+    }
+    
+    .gallery-challenge {
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+    
+    .gallery-author {
+        font-size: 0.9rem;
+        color: var(--text-light);
+    }
+    
+    .countdown-container {
+        text-align: center;
+        padding: 3rem 2rem;
+        background-color: var(--bg-white);
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .countdown {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin: 2rem 0;
+        flex-wrap: wrap;
+    }
+    
+    .countdown-item {
+        text-align: center;
+    }
+    
+    .countdown-value {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        font-family: 'Cormorant Garamond', serif;
+    }
+    
+    .countdown-label {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        color: var(--text-light);
+        letter-spacing: 1px;
+    }
+    
+    .empty-gallery {
+        text-align: center;
+        padding: 4rem 2rem;
+        background-color: var(--bg-light);
+        border-radius: 10px;
+    }
+    
+    /* Lightbox */
+    .lightbox {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .lightbox.active {
+        display: flex;
+    }
+    
+    .lightbox-content {
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+    }
+    
+    .lightbox-close {
+        position: absolute;
+        top: 2rem;
+        right: 2rem;
+        font-size: 3rem;
+        color: white;
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-weight: 300;
+    }
+    
+    .lightbox-info {
+        position: absolute;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        color: white;
+        text-align: center;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 1rem 2rem;
+        border-radius: 5px;
+    }
+    
+    @media (max-width: 768px) {
+        .gallery-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <h1>📷 Photo Gallery</h1>
+        <div class="decorative-line"></div>
+        <p>See moments captured for {{ couple_names }}!</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        {% if not is_unlocked %}
+        <div class="countdown-container">
+            <h2>Gallery Opens Soon!</h2>
+            <p class="lead">The photo gallery will be available on our wedding day</p>
+            
+            <div class="countdown" id="countdown">
+                <div class="countdown-item">
+                    <div class="countdown-value" id="days">--</div>
+                    <div class="countdown-label">Days</div>
+                </div>
+                <div class="countdown-item">
+                    <div class="countdown-value" id="hours">--</div>
+                    <div class="countdown-label">Hours</div>
+                </div>
+                <div class="countdown-item">
+                    <div class="countdown-value" id="minutes">--</div>
+                    <div class="countdown-label">Minutes</div>
+                </div>
+                <div class="countdown-item">
+                    <div class="countdown-value" id="seconds">--</div>
+                    <div class="countdown-label">Seconds</div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+            {% if submissions %}
+            <div class="gallery-grid">
+                {% for submission in submissions %}
+                <div class="gallery-item">
+                    <img src="{{ url_for('static', filename='uploads/photos/' + submission.filename) }}" 
+                         alt="{{ submission.challenge }}"
+                         class="gallery-image"
+                         onclick="openLightbox('{{ url_for('static', filename='uploads/photos/' + submission.filename) }}', '{{ submission.challenge }}', '{{ submission.guest_name }}')">
+                    <div class="gallery-info">
+                        <div class="gallery-challenge">{{ submission.challenge }}</div>
+                        <div class="gallery-author">by {{ submission.guest_name }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-gallery">
+                <h2>No Photos Yet!</h2>
+                <p class="lead">Be the first to complete a photo challenge!</p>
+                <a href="{{ url_for('photo_challenge') }}" class="btn btn-primary" style="margin-top: 1rem;">Get Your Challenge</a>
+            </div>
+            {% endif %}
+            
+        {% endif %}
+    </div>
+</section>
+
+<!-- Lightbox -->
+<div id="lightbox" class="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <img id="lightbox-img" class="lightbox-content" onclick="event.stopPropagation()">
+    <div class="lightbox-info" onclick="event.stopPropagation()">
+        <div id="lightbox-challenge" style="font-weight: 600; margin-bottom: 0.5rem;"></div>
+        <div id="lightbox-author" style="font-size: 0.9rem;"></div>
+    </div>
+</div>
+
+{% if not is_unlocked %}
+<script>
+    // Countdown timer
+    const weddingDate = new Date("{{ wedding_datetime.strftime('%Y-%m-%d %H:%M:%S') }}").getTime();
+    
+    function updateCountdown() {
+        const now = new Date().getTime();
+        const distance = weddingDate - now;
+        
+        if (distance < 0) {
+            location.reload();
+            return;
+        }
+        
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        
+        document.getElementById('days').textContent = days;
+        document.getElementById('hours').textContent = hours;
+        document.getElementById('minutes').textContent = minutes;
+        document.getElementById('seconds').textContent = seconds;
+    }
+    
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+</script>
+{% else %}
+<script>
+    function openLightbox(src, challenge, author) {
+        const lightbox = document.getElementById('lightbox');
+        const img = document.getElementById('lightbox-img');
+        const challengeText = document.getElementById('lightbox-challenge');
+        const authorText = document.getElementById('lightbox-author');
+        
+        img.src = src;
+        challengeText.textContent = challenge;
+        authorText.textContent = 'by ' + author;
+        lightbox.classList.add('active');
+        
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeLightbox() {
+        const lightbox = document.getElementById('lightbox');
+        lightbox.classList.remove('active');
+        
+        // Restore body scroll
+        document.body.style.overflow = 'auto';
+    }
+    
+    // Close on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeLightbox();
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

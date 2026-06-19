@@ -1,0 +1,192 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Admin Users{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <div>
+        <h1>Admin Users</h1>
+        <p>Manage who has access to the admin panel.</p>
+    </div>
+</div>
+
+<!-- Existing users -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <h2 style="margin: 0; font-size: 1.2rem;">Current Admins</h2>
+    </div>
+    <div class="table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Created</th>
+                    <th>Last Login</th>
+                    <th style="text-align: center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <strong>{{ user.email }}</strong>
+                        {% if user.id == current_user.id %}
+                            <span style="margin-left: 0.5rem; padding: 0.15rem 0.5rem; background: var(--admin-accent); color: white; border-radius: 4px; font-size: 0.75rem;">You</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.created_at.strftime('%b %d, %Y') if user.created_at else '-' }}</td>
+                    <td>{{ user.last_login.strftime('%b %d, %Y %H:%M') if user.last_login else 'Never' }}</td>
+                    <td style="text-align: center;">
+                        {% if user.id != current_user.id %}
+                        <form method="POST" style="display:inline;" onsubmit="return confirm('Delete admin {{ user.email }}? This cannot be undone.');">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                        <button type="button" class="btn btn-sm btn-change-pw" onclick="openResetModal({{ user.id }}, '{{ user.email | e }}')">Change Password</button>
+                        {% else %}
+                        <span style="color: var(--admin-text-muted); font-size: 0.85rem;">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Reset password modal (for other admins - no current password required) -->
+<div id="reset-password-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:10px; box-shadow:0 10px 40px rgba(0,0,0,0.25); width:100%; max-width:460px; margin:1rem;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid var(--admin-border,#e0e0e0);">
+            <h2 id="reset-modal-title" style="margin:0; font-size:1.2rem;">Reset Password</h2>
+            <button type="button" onclick="closeResetModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--admin-text-muted,#888); line-height:1;">&times;</button>
+        </div>
+        <form method="POST" style="padding:1.5rem;">
+            <input type="hidden" name="action" value="reset_password">
+            <input type="hidden" name="user_id" id="reset-user-id">
+            <div class="form-group">
+                <label for="reset_new_password">New Password <small style="color:var(--admin-text-muted,#888);">(min. 8 characters)</small></label>
+                <input type="password" id="reset_new_password" name="new_password" class="form-control" minlength="8" required>
+            </div>
+            <div class="form-group" style="margin-bottom:1.5rem;">
+                <label for="reset_confirm_password">Confirm New Password</label>
+                <input type="password" id="reset_confirm_password" name="confirm_new_password" class="form-control" minlength="8" required>
+            </div>
+            <div style="display:flex; gap:0.75rem;">
+                <button type="submit" class="btn btn-primary" style="flex:1;">Reset Password</button>
+                <button type="button" onclick="closeResetModal()" class="btn" style="flex:1; background:var(--admin-border,#e0e0e0); color:var(--admin-text,#333);">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add new user -->
+<div class="card">
+    <div class="card-header">
+        <h2 style="margin: 0; font-size: 1.2rem;">Add New Admin</h2>
+    </div>
+    <div style="padding: 1.5rem;">
+        <form method="POST" style="max-width: 480px;">
+            <input type="hidden" name="action" value="add">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="admin@example.com" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password <small style="color: var(--admin-text-muted);">(min. 8 characters)</small></label>
+                <input type="password" id="password" name="password" class="form-control" minlength="8" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" class="form-control" minlength="8" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Admin</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .card {
+        background: var(--admin-card-bg, #fff);
+        border: 1px solid var(--admin-border, #e0e0e0);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .card-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--admin-border, #e0e0e0);
+        background: var(--admin-card-header-bg, #f8f9fa);
+    }
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.4rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .form-control {
+        width: 100%;
+        padding: 0.65rem 0.75rem;
+        border: 1px solid var(--admin-border, #ccc);
+        border-radius: 5px;
+        font-size: 1rem;
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: var(--admin-accent, #2d5016);
+        box-shadow: 0 0 0 2px rgba(45, 80, 22, 0.15);
+    }
+    .btn-sm {
+        padding: 0.3rem 0.75rem;
+        font-size: 0.85rem;
+    }
+    .btn-change-pw {
+        background: var(--admin-accent, #2d5016);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+    }
+    .btn-change-pw:hover {
+        background: var(--admin-accent-hover, #4a7c2c);
+    }
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+    }
+    .btn-danger:hover {
+        background: #b02a37;
+    }
+</style>
+
+<script>
+    function openResetModal(userId, email) {
+        document.getElementById('reset-user-id').value = userId;
+        document.getElementById('reset-modal-title').textContent = 'Reset Password - ' + email;
+        document.getElementById('reset_new_password').value = '';
+        document.getElementById('reset_confirm_password').value = '';
+        document.getElementById('reset-password-modal').style.display = 'flex';
+    }
+    function closeResetModal() {
+        document.getElementById('reset-password-modal').style.display = 'none';
+    }
+    document.getElementById('reset-password-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeResetModal();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeResetModal();
+    });
+</script>
+{% endblock %}

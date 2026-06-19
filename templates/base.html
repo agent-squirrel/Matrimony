@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_title }}{% endblock %}</title>
+    {% if wedding_config and wedding_config.favicon_filename %}
+    {% set _fext = wedding_config.favicon_filename.rsplit('.', 1)[-1] %}
+    {% set _ftype = {'ico': 'image/x-icon', 'png': 'image/png', 'svg': 'image/svg+xml', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg'}.get(_fext, 'image/png') %}
+    <link rel="icon" type="{{ _ftype }}" href="{{ url_for('static', filename='uploads/favicon/' + wedding_config.favicon_filename) }}?v={{ wedding_config.updated_at.timestamp()|int if wedding_config.updated_at else 1 }}">
+    {% else %}
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥂</text></svg>">
+    {% endif %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: {{ theme_primary_color }};
+            --primary-text-color: {{ theme_primary_text_color }};
+            --accent-color: {{ theme_accent_color }};
+            --highlight-color: {{ theme_highlight_color }};
+            --gold-accent: {{ theme_highlight_color }};
+            --tab-text-color: {{ theme_nav_text_color }};
+            --button-color: {{ theme_button_color }};
+            --footer-background-color: {{ footer_background_color }};
+            --footer-text-color: {{ footer_text_color }};
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="layout-{{ site_layout }}">
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="{{ url_for('home') }}">{{ couple_initials }}</a>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('home') }}" class="{% if request.endpoint == 'home' %}active{% endif %}">Home</a></li>
+                {% if show_details_tab %}
+                    <li><a href="{{ url_for('details') }}" class="{% if request.endpoint == 'details' %}active{% endif %}">Details</a></li>
+                {% endif %}
+                {% if twitch_enabled %}
+                    <li><a href="{{ url_for('stream') }}" class="{% if request.endpoint == 'stream' %}active{% endif %}">Live Stream</a></li>
+                {% endif %}
+                {% if photo_challenge_enabled %}
+                    <li><a href="{{ url_for('photo_challenge') }}" class="{% if request.endpoint == 'photo_challenge' %}active{% endif %}">Photo Challenge</a></li>
+                    <li><a href="{{ url_for('gallery') }}" class="{% if request.endpoint == 'gallery' %}active{% endif %}">Gallery</a></li>
+                {% endif %}
+                {% if show_admin_link %}
+                    <li><a href="{{ url_for('admin_dashboard') }}" class="{% if request.endpoint and request.endpoint.startswith('admin_') %}active{% endif %}">Admin</a></li>
+                {% endif %}
+            </ul>
+            <div class="nav-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                        <button class="close-flash">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <main class="site-main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; {{ current_year }} {{ couple_names }}. All rights reserved.</p>
+            <p class="domain">{{ footer_domain }}</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
