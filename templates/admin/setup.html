@@ -159,7 +159,12 @@
 <body>
     <div class="setup-container">
         <div class="setup-header">
-            <h1>💒 Wedding Website Setup</h1>
+            <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="{{ url_for('static', filename='img/matrimony-logo-light.svg') }}">
+                <img src="{{ url_for('static', filename='img/matrimony-logo.svg') }}"
+                     alt="Matrimony"
+                     style="width: 260px; height: auto; margin-bottom: 1.25rem; display: block; margin-left: auto; margin-right: auto;">
+            </picture>
             <p>Let's get your wedding website ready!</p>
         </div>
         

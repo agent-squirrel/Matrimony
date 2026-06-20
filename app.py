@@ -1234,10 +1234,10 @@ def inject_template_globals():
         twitch_enabled = wed_cfg.twitch_enabled if wed_cfg.twitch_enabled is not None else False
         photo_challenge_enabled = wed_cfg.photo_challenge_enabled if wed_cfg.photo_challenge_enabled is not None else True
     else:
-        groom = config['wedding'].get('groom', 'Partner 2')
-        bride = config['wedding'].get('bride', 'Partner 1')
-        site_title = f"{groom} & {bride} Wedding"
-        footer_domain = config.get('domain', 'domain name')
+        groom = 'Partner 1'
+        bride = 'Partner 2'
+        site_title = 'Our Wedding'
+        footer_domain = 'example.com'
         theme_primary_color = '#6D4846'
         theme_primary_text_color = '#F5F1EE'
         theme_accent_color = '#9C5B5B'
