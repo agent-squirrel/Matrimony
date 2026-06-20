@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.git/
+.gitignore
+docs/
+*.md
+config.yml
+static/uploads/photos/*
+static/uploads/favicon/*
+take_screenshots.py

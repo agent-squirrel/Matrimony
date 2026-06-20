@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import text
-import yaml
+from dotenv import load_dotenv
 from datetime import datetime
 import os
 import random
@@ -16,20 +16,37 @@ from functools import wraps
 import qrcode
 import threading
 
+load_dotenv()
+
 app = Flask(__name__)
 
-# Load configuration from YAML file
-config_file = os.path.join(os.path.dirname(__file__), 'config.yml')
-with open(config_file, 'r') as f:
-    config = yaml.safe_load(f)
+def _build_db_url():
+    url = os.environ.get('DATABASE_URL', '')
+    if url:
+        # Normalize provider-supplied URLs to SQLAlchemy driver schemes
+        if url.startswith('postgres://'):
+            return url.replace('postgres://', 'postgresql+psycopg2://', 1)
+        if url.startswith('postgresql://'):
+            return url.replace('postgresql://', 'postgresql+psycopg2://', 1)
+        if url.startswith('mysql2://'):
+            return url.replace('mysql2://', 'mysql+pymysql://', 1)
+        if url.startswith('mysql://'):
+            return url.replace('mysql://', 'mysql+pymysql://', 1)
+        return url
+    host = os.environ.get('DB_HOST', 'localhost')
+    port = os.environ.get('DB_PORT', '3306')
+    user = os.environ.get('DB_USER', 'wedding_user')
+    password = os.environ.get('DB_PASS', 'wedding_password')
+    name = os.environ.get('DB_NAME', 'wedding_db')
+    return f"mysql+pymysql://{user}:{password}@{host}:{port}/{name}"
 
-# Flask configuration
-app.config['SECRET_KEY'] = config['flask']['secret_key']
-app.config['ENV'] = config['flask']['env']
+_secret_key = os.environ.get('SECRET_KEY', '')
+if not _secret_key:
+    _secret_key = secrets.token_hex(32)
+    print("WARNING: SECRET_KEY env var not set — sessions will not persist across restarts. Set it in your .env file.")
 
-# Database configuration
-db_config = config['database']
-app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{db_config['user']}:{db_config['password']}@{db_config['host']}:{db_config['port']}/{db_config['name']}"
+app.config['SECRET_KEY'] = _secret_key
+app.config['SQLALCHEMY_DATABASE_URI'] = _build_db_url()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize database
@@ -40,17 +57,15 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'admin_login'
 
-# Flask-Mail configuration
-_mail_cfg = config.get('mail', {})
-app.config['MAIL_SERVER'] = _mail_cfg.get('server', '')
-app.config['MAIL_PORT'] = _mail_cfg.get('port', 25)
+# Mail is configured at runtime from the database (WeddingConfig).
+# These are empty bootstrap defaults only.
+app.config['MAIL_SERVER'] = ''
+app.config['MAIL_PORT'] = 25
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = _mail_cfg.get('username', '')
-app.config['MAIL_PASSWORD'] = _mail_cfg.get('password', '')
-_bootstrap_sender = _mail_cfg.get('default_sender', _mail_cfg.get('username', ''))
-app.config['MAIL_DEFAULT_SENDER'] = ('Wedding', _bootstrap_sender)
-app.config['CONTACT_EMAIL'] = _mail_cfg.get('contact_email', '')
+app.config['MAIL_USERNAME'] = ''
+app.config['MAIL_PASSWORD'] = ''
+app.config['MAIL_DEFAULT_SENDER'] = ('Wedding', '')
 
 # Photo upload configuration
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads', 'photos')
@@ -114,14 +129,14 @@ class WeddingConfig(db.Model):
     registry_name = db.Column(db.String(500), nullable=True)
     registry_url = db.Column(db.String(1000), nullable=True)
     # Theme colors (hex values)
-    primary_color = db.Column(db.String(7), nullable=False, default='#2d5016')
-    primary_text_color = db.Column(db.String(7), nullable=False, default='#ffffff')
-    accent_color = db.Column(db.String(7), nullable=False, default='#4a7c2c')
-    nav_text_color = db.Column(db.String(7), nullable=False, default='#2c3e50')
-    button_color = db.Column(db.String(7), nullable=False, default='#2d5016')
-    gold_accent = db.Column(db.String(7), nullable=False, default='#D4AF37')
-    footer_background_color = db.Column(db.String(7), nullable=False, default='#2c3e50')
-    footer_text_color = db.Column(db.String(7), nullable=False, default='#ffffff')
+    primary_color = db.Column(db.String(7), nullable=False, default='#6D4846')
+    primary_text_color = db.Column(db.String(7), nullable=False, default='#F5F1EE')
+    accent_color = db.Column(db.String(7), nullable=False, default='#9C5B5B')
+    nav_text_color = db.Column(db.String(7), nullable=False, default='#3F3631')
+    button_color = db.Column(db.String(7), nullable=False, default='#6D4846')
+    gold_accent = db.Column(db.String(7), nullable=False, default='#C9A87C')
+    footer_background_color = db.Column(db.String(7), nullable=False, default='#211A17')
+    footer_text_color = db.Column(db.String(7), nullable=False, default='#A89C95')
     show_footer_copyright = db.Column(db.Boolean, default=True)  # retained for DB compatibility, no longer exposed in UI
     # Event section toggles
     show_ceremony = db.Column(db.Boolean, default=True)
@@ -204,11 +219,11 @@ class RSVPSubmission(db.Model):
 def ensure_wedding_config_columns():
     """Add missing WeddingConfig columns for environments without migrations."""
     alter_statements = {
-        'primary_text_color': "ALTER TABLE wedding_config ADD COLUMN primary_text_color VARCHAR(7) NOT NULL DEFAULT '#ffffff'",
-        'nav_text_color': "ALTER TABLE wedding_config ADD COLUMN nav_text_color VARCHAR(7) NOT NULL DEFAULT '#2c3e50'",
-        'button_color': "ALTER TABLE wedding_config ADD COLUMN button_color VARCHAR(7) NOT NULL DEFAULT '#2d5016'",
-        'footer_background_color': "ALTER TABLE wedding_config ADD COLUMN footer_background_color VARCHAR(7) NOT NULL DEFAULT '#2c3e50'",
-        'footer_text_color': "ALTER TABLE wedding_config ADD COLUMN footer_text_color VARCHAR(7) NOT NULL DEFAULT '#ffffff'",
+        'primary_text_color': "ALTER TABLE wedding_config ADD COLUMN primary_text_color VARCHAR(7) NOT NULL DEFAULT '#F5F1EE'",
+        'nav_text_color': "ALTER TABLE wedding_config ADD COLUMN nav_text_color VARCHAR(7) NOT NULL DEFAULT '#3F3631'",
+        'button_color': "ALTER TABLE wedding_config ADD COLUMN button_color VARCHAR(7) NOT NULL DEFAULT '#6D4846'",
+        'footer_background_color': "ALTER TABLE wedding_config ADD COLUMN footer_background_color VARCHAR(7) NOT NULL DEFAULT '#211A17'",
+        'footer_text_color': "ALTER TABLE wedding_config ADD COLUMN footer_text_color VARCHAR(7) NOT NULL DEFAULT '#A89C95'",
         'show_footer_copyright': "ALTER TABLE wedding_config ADD COLUMN show_footer_copyright BOOLEAN NOT NULL DEFAULT TRUE",
         'show_ceremony': "ALTER TABLE wedding_config ADD COLUMN show_ceremony BOOLEAN NOT NULL DEFAULT TRUE",
         'show_reception': "ALTER TABLE wedding_config ADD COLUMN show_reception BOOLEAN NOT NULL DEFAULT TRUE",
@@ -330,55 +345,8 @@ def load_user(user_id):
     return AdminUser.query.get(int(user_id))
 
 def get_wedding_config():
-    """Get wedding configuration from database with fallback to YAML for initial setup"""
-    wedding_cfg = WeddingConfig.query.first()
-    if wedding_cfg:
-        return wedding_cfg
-    # Fallback to YAML for backwards compatibility during migration
-    if os.path.exists(config_file := os.path.join(os.path.dirname(__file__), 'config.yml')):
-        with open(config_file, 'r') as f:
-            yaml_config = yaml.safe_load(f)
-            # Create WeddingConfig from YAML on first access
-            wedding_cfg = WeddingConfig(
-                bride=yaml_config['wedding'].get('bride', 'Partner 1'),
-                groom=yaml_config['wedding'].get('groom', 'Partner 2'),
-                wedding_date=yaml_config['wedding'].get('date', 'TBD'),
-                wedding_datetime=datetime.strptime(yaml_config['wedding'].get('date_full', '2099-12-31 00:00:00'), '%Y-%m-%d %H:%M:%S'),
-                venue=yaml_config['wedding'].get('venue', 'TBD'),
-                city=yaml_config['wedding'].get('city', 'TBD'),
-                ceremony_location=yaml_config['details'].get('ceremony_location', 'TBD'),
-                ceremony_time=yaml_config['details'].get('ceremony_time', 'TBD'),
-                reception_location=yaml_config['details'].get('reception_location', 'TBD'),
-                reception_time=yaml_config['details'].get('reception_time', 'TBD'),
-                after_party_location=yaml_config['details'].get('after_party_location', 'TBD'),
-                primary_text_color='#ffffff',
-                nav_text_color='#2c3e50',
-                button_color='#2d5016',
-                footer_background_color='#2c3e50',
-                footer_text_color='#ffffff',
-                show_ceremony=True,
-                show_reception=True,
-                show_after_party=True,
-                mail_contact_email=yaml_config['mail'].get('contact_email', 'contact@wedding.com') if 'mail' in yaml_config else 'contact@wedding.com',
-                mail_sender_name=f"{yaml_config['wedding']['groom']} & {yaml_config['wedding']['bride']}",
-                mail_smtp_server=yaml_config['mail'].get('server', 'smtp.gmail.com') if 'mail' in yaml_config else 'smtp.gmail.com',
-                mail_smtp_port=yaml_config['mail'].get('port', 465) if 'mail' in yaml_config else 465,
-                mail_use_ssl=True,
-                mail_smtp_username=yaml_config['mail'].get('username', '') if 'mail' in yaml_config else '',
-                mail_smtp_password=yaml_config['mail'].get('password', '') if 'mail' in yaml_config else '',
-                mail_sender_email=yaml_config['mail'].get('default_sender', '') if 'mail' in yaml_config else '',
-                twitch_enabled=yaml_config['twitch'].get('enabled', False),
-                twitch_channel=yaml_config['twitch'].get('channel', ''),
-                site_password_protected=yaml_config['site_protection'].get('enabled', False),
-                site_password=yaml_config['site_protection'].get('password', ''),
-                footer_domain=yaml_config.get('domain', 'wedding.com'),
-                site_title=f"{yaml_config['wedding']['groom']} & {yaml_config['wedding']['bride']} Wedding",
-                site_layout='classic'
-            )
-            db.session.add(wedding_cfg)
-            db.session.commit()
-            return wedding_cfg
-    return None
+    """Get wedding configuration from database."""
+    return WeddingConfig.query.first()
 
 def setup_required():
     """True when initial admin setup has not been completed yet."""
@@ -415,8 +383,8 @@ def build_wedding_email_template(recipient_name, heading, message_text='', inclu
     wedding_date = wed_cfg.wedding_date
     venue = wed_cfg.venue
     city = wed_cfg.city
-    primary_color = wed_cfg.primary_color or '#2d5016'
-    accent_color = wed_cfg.accent_color or '#4a7c2c'
+    primary_color = wed_cfg.primary_color or '#6D4846'
+    accent_color = wed_cfg.accent_color or '#9C5B5B'
     gold_accent = wed_cfg.gold_accent or '#D4AF37'
 
     message_section = ''
@@ -1252,14 +1220,14 @@ def inject_template_globals():
         bride = wed_cfg.bride or 'Partner 1'
         site_title = wed_cfg.site_title or f"{groom} & {bride} Wedding"
         footer_domain = wed_cfg.footer_domain or 'domain name'
-        theme_primary_color = wed_cfg.primary_color or '#2d5016'
-        theme_primary_text_color = wed_cfg.primary_text_color or '#ffffff'
-        theme_accent_color = wed_cfg.accent_color or '#4a7c2c'
-        theme_highlight_color = wed_cfg.gold_accent or '#D4AF37'
-        theme_nav_text_color = wed_cfg.nav_text_color or '#2c3e50'
+        theme_primary_color = wed_cfg.primary_color or '#6D4846'
+        theme_primary_text_color = wed_cfg.primary_text_color or '#F5F1EE'
+        theme_accent_color = wed_cfg.accent_color or '#9C5B5B'
+        theme_highlight_color = wed_cfg.gold_accent or '#C9A87C'
+        theme_nav_text_color = wed_cfg.nav_text_color or '#3F3631'
         theme_button_color = wed_cfg.button_color or theme_primary_color
-        footer_background_color = wed_cfg.footer_background_color or '#2c3e50'
-        footer_text_color = wed_cfg.footer_text_color or '#ffffff'
+        footer_background_color = wed_cfg.footer_background_color or '#211A17'
+        footer_text_color = wed_cfg.footer_text_color or '#A89C95'
         site_layout = wed_cfg.site_layout or 'classic'
         show_details_tab = any([wed_cfg.show_ceremony, wed_cfg.show_reception, wed_cfg.show_after_party])
         show_admin_link = wed_cfg.show_admin_link if wed_cfg.show_admin_link is not None else True
@@ -1270,14 +1238,14 @@ def inject_template_globals():
         bride = config['wedding'].get('bride', 'Partner 1')
         site_title = f"{groom} & {bride} Wedding"
         footer_domain = config.get('domain', 'domain name')
-        theme_primary_color = '#2d5016'
-        theme_primary_text_color = '#ffffff'
-        theme_accent_color = '#4a7c2c'
-        theme_highlight_color = '#D4AF37'
-        theme_nav_text_color = '#2c3e50'
-        theme_button_color = '#2d5016'
-        footer_background_color = '#2c3e50'
-        footer_text_color = '#ffffff'
+        theme_primary_color = '#6D4846'
+        theme_primary_text_color = '#F5F1EE'
+        theme_accent_color = '#9C5B5B'
+        theme_highlight_color = '#C9A87C'
+        theme_nav_text_color = '#3F3631'
+        theme_button_color = '#6D4846'
+        footer_background_color = '#211A17'
+        footer_text_color = '#A89C95'
         site_layout = 'classic'
         show_details_tab = True
         show_admin_link = True
@@ -1389,11 +1357,11 @@ def admin_setup():
                     city=city,
                     ceremony_location=venue,
                     reception_location=venue,
-                    primary_text_color='#ffffff',
-                    nav_text_color='#2c3e50',
-                    button_color='#2d5016',
-                    footer_background_color='#2c3e50',
-                    footer_text_color='#ffffff',
+                    primary_text_color='#F5F1EE',
+                    nav_text_color='#3F3631',
+                    button_color='#6D4846',
+                    footer_background_color='#211A17',
+                    footer_text_color='#A89C95',
                     show_ceremony=True,
                     show_reception=True,
                     show_after_party=True,

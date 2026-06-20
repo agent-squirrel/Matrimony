@@ -989,6 +989,9 @@ span.flatpickr-weekday { color: var(--admin-text-muted); font-weight: 600; font-
         </p>
 
         <div class="preset-strip" id="presetStrip">
+            <button type="button" class="preset-chip" data-theme="matrimony">
+                <div class="chip-dot" style="background:#6D4846;"></div> Matrimony
+            </button>
             <button type="button" class="preset-chip" data-theme="classic">
                 <div class="chip-dot" style="background:#2d5016;"></div> Classic Green
             </button>
@@ -1566,6 +1569,11 @@ document.getElementById('colorPickers').querySelectorAll('input[type="color"]')
 
 /* ── Colour presets ─────────────────────────────────────── */
 var themePresets = {
+    matrimony: {
+        primary_color: '#6D4846', primary_text_color: '#F5F1EE', accent_color: '#9C5B5B',
+        nav_text_color: '#3F3631', button_color: '#6D4846', gold_accent: '#C9A87C',
+        footer_background_color: '#211A17', footer_text_color: '#A89C95'
+    },
     classic: {
         primary_color: '#2d5016', primary_text_color: '#ffffff', accent_color: '#4a7c2c',
         nav_text_color: '#2c3e50', button_color: '#2d5016', gold_accent: '#D4AF37',
