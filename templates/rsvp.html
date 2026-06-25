@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <div class="container">
-        <h1>📅 Save the Date</h1>
+        <h1><i class="{{ icon_weight }} ph-calendar"></i> Save the Date</h1>
         <div class="decorative-line"></div>
         <p>Help {{ couple_names }} plan this special day by sharing your details.</p>
     </div>
@@ -40,13 +40,13 @@
                 <button type="submit" class="btn btn-primary">Save My Details</button>
                 
                 <p class="save-the-date-note">
-                    <strong>📬 What's Next?</strong><br>
+                    <strong><i class="{{ icon_weight }} ph-envelope"></i> What's Next?</strong><br>
                     After submitting, you'll receive a formal invitation with a personalized QR code to confirm your RSVP closer to the wedding date.
                 </p>
             </form>
 
             <div class="rsvp-info">
-                <h3>📅 Wedding Details</h3>
+                <h3><i class="{{ icon_weight }} ph-calendar"></i> Wedding Details</h3>
                 <p><strong>Date:</strong> {{ wedding_config.wedding_date }}</p>
                 <p><strong>Venue:</strong> {{ wedding_config.venue }}</p>
                 <p><strong>Location:</strong> {{ wedding_config.city }}</p>

@@ -5,21 +5,21 @@
 {% block content %}
 <div class="page-header">
     <div class="container">
-        <h1>📋 Save the Date & RSVP Tracking</h1>
+        <h1><i class="{{ icon_weight }} ph-clipboard-text"></i> Save the Date &amp; RSVP Tracking</h1>
         <div class="decorative-line"></div>
         <p>Total Guests: {{ rsvps|length }} | Confirmed RSVPs: {{ rsvps|selectattr('rsvp_confirmed')|list|length }}</p>
         
         <!-- QR Code Section -->
         <div class="qr-code-container" style="margin: 1rem 0; text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
-            <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">📱 Guest QR Code</h3>
+            <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;"><i class="{{ icon_weight }} ph-qr-code"></i> Guest QR Code</h3>
             <img src="{{ url_for('generate_save_qr') }}" alt="QR Code for Save the Date" style="max-width: 150px; border: 2px solid var(--primary-color); border-radius: 4px; padding: 8px; background: white; display: inline-block; margin: 0.5rem 0;">
             <br>
-            <a href="{{ url_for('download_save_qr') }}" class="btn btn-primary" style="margin-top: 0.5rem; display: inline-block; padding: 0.4rem 0.8rem; font-size: 0.9rem;" download="save-the-date-qr.png">📥 Download High-Res</a>
+            <a href="{{ url_for('download_save_qr') }}" class="btn btn-primary" style="margin-top: 0.5rem; display: inline-block; padding: 0.4rem 0.8rem; font-size: 0.9rem;" download="save-the-date-qr.png"><i class="{{ icon_weight }} ph-download-simple"></i> Download High-Res</a>
         </div>
         
         <div class="admin-actions">
-            <a href="{{ url_for('rsvp_admin_qr_codes') }}" class="export-btn">🎟️ Print Guest QR Codes</a>
-            <a href="{{ url_for('rsvp_admin_export') }}" class="export-btn">📥 Export to CSV</a>
+            <a href="{{ url_for('rsvp_admin_qr_codes') }}" class="export-btn"><i class="{{ icon_weight }} ph-printer"></i> Print Guest QR Codes</a>
+            <a href="{{ url_for('rsvp_admin_export') }}" class="export-btn"><i class="{{ icon_weight }} ph-download-simple"></i> Export to CSV</a>
             <a href="{{ url_for('rsvp_admin_logout') }}" class="logout-btn">Logout</a>
         </div>
 
@@ -93,7 +93,7 @@
 
             {% else %}
             <div class="empty-state">
-                <div class="empty-icon">📭</div>
+                <div class="empty-icon"><i class="{{ icon_weight }} ph-tray"></i></div>
                 <h2>No Save the Date Submissions Yet</h2>
                 <p>Guest information will appear here once they submit their details.</p>
             </div>

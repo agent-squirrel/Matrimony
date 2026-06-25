@@ -5,11 +5,11 @@
 {% block content %}
 <div class="page-header no-print">
     <div class="container">
-        <h1>🎟️ Guest QR Codes</h1>
+        <h1><i class="{{ icon_weight }} ph-qr-code"></i> Guest QR Codes</h1>
         <div class="decorative-line"></div>
         <p>Print this page to create personalized QR codes for each guest's RSVP confirmation link.</p>
         <div class="admin-actions">
-            <button onclick="window.print()" class="btn btn-primary">🖨️ Print QR Codes</button>
+            <button onclick="window.print()" class="btn btn-primary"><i class="{{ icon_weight }} ph-printer"></i> Print QR Codes</button>
             <a href="{{ url_for('rsvp_admin') }}" class="btn btn-secondary">← Back to Admin</a>
         </div>
     </div>
@@ -38,7 +38,7 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <div class="empty-icon">📭</div>
+            <div class="empty-icon"><i class="{{ icon_weight }} ph-tray"></i></div>
             <h2>No Guests Yet</h2>
             <p>QR codes will appear here once guests submit their Save the Date information.</p>
         </div>

@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <div class="container">
-        <h1>🎉 RSVP Confirmation</h1>
+        <h1><i class="{{ icon_weight }} ph-heart"></i> RSVP Confirmation</h1>
         <div class="decorative-line"></div>
         <p>{{ guest.names }}</p>
     </div>
@@ -28,7 +28,7 @@
                     </div>
                     
                     <div class="wedding-info">
-                        <h3>📅 Wedding Details</h3>
+                        <h3><i class="{{ icon_weight }} ph-calendar"></i> Wedding Details</h3>
                         <p><strong>Date:</strong> {{ wedding_config.wedding_date }}</p>
                         <p><strong>Time:</strong> {{ wedding_config.ceremony_time }}</p>
                         <p><strong>Venue:</strong> {{ wedding_config.venue }}</p>
@@ -53,7 +53,7 @@
                     </div>
                     
                     <div class="wedding-info">
-                        <h3>📅 Wedding Details</h3>
+                        <h3><i class="{{ icon_weight }} ph-calendar"></i> Wedding Details</h3>
                         <p><strong>Date:</strong> {{ wedding_config.wedding_date }}</p>
                         <p><strong>Time:</strong> {{ wedding_config.ceremony_time }}</p>
                         <p><strong>Venue:</strong> {{ wedding_config.venue }}</p>

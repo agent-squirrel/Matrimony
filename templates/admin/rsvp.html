@@ -9,10 +9,10 @@
         <p>All guest RSVPs in chronological order.</p>
     </div>
     <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
-        <a href="{{ url_for('rsvp_admin_qr_codes') }}" class="btn btn-secondary" style="text-decoration:none;">🖨 Print QR Codes</a>
-        <a href="{{ url_for('admin_rsvp_export') }}" class="btn btn-secondary" style="text-decoration:none;">⬇ Export CSV</a>
+        <a href="{{ url_for('rsvp_admin_qr_codes') }}" class="btn btn-secondary" style="text-decoration:none;"><i class="ph ph-printer"></i> Print QR Codes</a>
+        <a href="{{ url_for('admin_rsvp_export') }}" class="btn btn-secondary" style="text-decoration:none;"><i class="ph ph-download-simple"></i> Export CSV</a>
         <button type="button" class="btn btn-primary" onclick="document.getElementById('import-csv-panel').style.display = document.getElementById('import-csv-panel').style.display === 'none' ? 'block' : 'none'">
-            ⬆ Import CSV
+            <i class="ph ph-upload-simple"></i> Import CSV
         </button>
     </div>
 </div>

@@ -266,7 +266,7 @@
     color: var(--pv-primary-text, #fff);
     letter-spacing: 0.06em; white-space: nowrap;
 }
-.pv-classic .pv-rule { width: 22%; height: 1px; background: var(--pv-primary-text, #fff); opacity: 0.45; }
+.pv-classic .pv-rule { width: 30%; height: 2px; background: var(--pv-primary-text, #fff); opacity: 0.55; }
 .pv-classic .pv-sub { font-size: 0.38rem; color: var(--pv-primary-text, #fff); opacity: 0.7; }
 .pv-classic .pv-section {
     flex: 1; background: #f4f4f4;
@@ -276,7 +276,7 @@
 .pv-classic .pv-card {
     flex: 1; height: 62%;
     background: #fff; border-radius: 4px;
-    border-left: 3px solid var(--pv-accent, #4a7c2c);
+    border-top: 3px solid var(--pv-primary, #2d5016);
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.08);
 }
 .pv-classic .pv-footer { height: 9%; background: var(--pv-footer-bg, #2c3e50); flex-shrink: 0; }
@@ -299,12 +299,12 @@
     opacity: 0.55; border-radius: 2px;
 }
 .pv-editorial .pv-hero {
-    height: 43%; background: var(--pv-primary, #2d5016);
+    height: 46%; background: var(--pv-primary, #2d5016);
     display: flex; flex-direction: column;
     justify-content: flex-end;
-    padding: 0 7% 9%;
-    clip-path: polygon(0 0, 100% 0, 100% 80%, 0 100%);
-    margin-bottom: -5%; flex-shrink: 0;
+    padding: 0 7% 14%;
+    clip-path: polygon(0 0, 100% 0, 100% 82%, 0 100%);
+    margin-bottom: -6%; flex-shrink: 0;
     z-index: 1; position: relative;
 }
 .pv-editorial .pv-hero-text {
@@ -313,7 +313,7 @@
     color: var(--pv-primary-text, #fff);
     letter-spacing: 0.04em;
 }
-.pv-editorial .pv-rule { width: 16%; height: 1px; background: var(--pv-gold, #d4af37); margin: 5% 0; }
+.pv-editorial .pv-rule { width: 22%; height: 2px; background: var(--pv-gold, #d4af37); margin: 4% 0 3%; }
 .pv-editorial .pv-sub {
     font-size: 0.3rem; color: var(--pv-primary-text, #fff);
     opacity: 0.65; letter-spacing: 0.18em; text-transform: uppercase;
@@ -361,7 +361,7 @@
     color: var(--pv-primary, #2d5016);
     letter-spacing: 0.08em;
 }
-.pv-minimal .pv-rule { width: 12%; height: 1px; background: var(--pv-accent, #4a7c2c); margin: 7% 0; opacity: 0.45; }
+.pv-minimal .pv-rule { width: 16%; height: 1px; background: var(--pv-accent, #4a7c2c); margin: 5% 0; opacity: 0.55; }
 .pv-minimal .pv-sub { font-size: 0.35rem; color: #aaa; }
 .pv-minimal .pv-section {
     flex: 1; background: #fafaf9;
@@ -373,7 +373,7 @@
     border-top: 1px solid rgba(0, 0, 0, 0.09);
 }
 .pv-minimal .pv-footer {
-    height: 8%; background: transparent;
+    height: 8%; background: #fafaf9;
     border-top: 1px solid rgba(0, 0, 0, 0.06); flex-shrink: 0;
 }
 
@@ -396,10 +396,10 @@
     opacity: 0.22; border-radius: 6px;
 }
 .pv-romantic .pv-hero {
-    height: 36%; background: radial-gradient(ellipse at 50% 60%, var(--pv-primary, #2d5016) 0%, color-mix(in srgb, var(--pv-primary, #2d5016) 70%, #000) 100%);
+    height: 40%; background: radial-gradient(ellipse at 50% 60%, var(--pv-primary, #2d5016) 0%, color-mix(in srgb, var(--pv-primary, #2d5016) 60%, #000) 100%);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    gap: 6%; flex-shrink: 0;
+    gap: 5%; flex-shrink: 0;
 }
 .pv-romantic .pv-hero-text {
     font-family: 'Cormorant Garamond', serif;
@@ -407,8 +407,8 @@
     color: var(--pv-primary-text, #fff);
     letter-spacing: 0.07em; white-space: nowrap;
 }
-.pv-romantic .pv-rule { width: 20%; height: 1px; background: var(--pv-gold, #d4af37); opacity: 0.70; border-radius: 2px; }
-.pv-romantic .pv-sub { font-size: 0.35rem; color: var(--pv-primary-text, #fff); opacity: 0.70; }
+.pv-romantic .pv-rule { width: 28%; height: 2px; background: var(--pv-gold, #d4af37); opacity: 0.85; border-radius: 2px; }
+.pv-romantic .pv-sub { font-size: 0.35rem; color: var(--pv-primary-text, #fff); opacity: 0.75; }
 .pv-romantic .pv-section {
     flex: 1; background: #fffdf9;
     display: flex; align-items: center;
@@ -416,9 +416,9 @@
 }
 .pv-romantic .pv-card {
     flex: 1; height: 58%;
-    background: #fff; border-radius: 10px;
+    background: #fff; border-radius: 8px;
     border-left: 3px solid var(--pv-accent, #4a7c2c);
-    box-shadow: 0 2px 10px rgba(180, 100, 100, 0.10);
+    box-shadow: 0 3px 10px rgba(180, 100, 100, 0.12);
 }
 .pv-romantic .pv-footer {
     height: 9%; background: var(--pv-footer-bg, #2c3e50);
@@ -455,8 +455,8 @@
     color: #f5efe6;
     letter-spacing: 0.10em; white-space: nowrap;
 }
-.pv-luxe .pv-rule { width: 28%; height: 1px; background: linear-gradient(90deg, transparent, var(--pv-gold, #d4af37), transparent); }
-.pv-luxe .pv-sub { font-size: 0.3rem; color: rgba(212, 175, 55, 0.70); letter-spacing: 0.20em; }
+.pv-luxe .pv-rule { width: 34%; height: 1px; background: linear-gradient(90deg, transparent, var(--pv-gold, #d4af37), transparent); }
+.pv-luxe .pv-sub { font-size: 0.3rem; color: rgba(245, 239, 230, 0.80); letter-spacing: 0.20em; }
 .pv-luxe .pv-section {
     flex: 1; background: #0f0f0f;
     display: flex; align-items: center;
@@ -464,7 +464,7 @@
 }
 .pv-luxe .pv-card {
     flex: 1; height: 60%; background: #1a1a1a;
-    border-top: 2px solid var(--pv-gold, #d4af37);
+    border-top: 2px solid var(--pv-accent, #d4af37);
     border-radius: 3px;
 }
 .pv-luxe .pv-footer {
@@ -594,6 +594,18 @@ span.flatpickr-weekday { color: var(--admin-text-muted); font-weight: 600; font-
 .preset-chip:hover { border-color: var(--admin-accent); box-shadow: 0 2px 8px rgba(52, 152, 219, 0.15); }
 .preset-chip.active-preset { border-color: var(--admin-accent); background: rgba(52, 152, 219, 0.07); }
 .chip-dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.10); flex-shrink: 0; }
+#customChips { display: contents; }
+.custom-chip-wrap { display: inline-flex; align-items: center; gap: 0; }
+.custom-chip-wrap .preset-chip { border-radius: 20px 0 0 20px; border-right: none; }
+.custom-chip-del {
+    display: flex; align-items: center; justify-content: center;
+    padding: 0.4rem 0.55rem;
+    border: 1.5px solid var(--admin-border); border-left: none;
+    border-radius: 0 20px 20px 0; background: #fff; cursor: pointer;
+    font-size: 0.75rem; color: var(--admin-text-muted);
+    transition: color 0.15s, background 0.15s;
+}
+.custom-chip-del:hover { color: #c0392b; background: #fff5f5; }
 </style>
 {% endblock %}
 
@@ -826,8 +838,8 @@ span.flatpickr-weekday { color: var(--admin-text-muted); font-weight: 600; font-
                         </div>
                         <div class="pv-hero">
                             <div class="pv-hero-text">J &amp; S</div>
-                            <div class="pv-rule"></div>
                             <div class="pv-sub">2026</div>
+                            <div class="pv-rule"></div>
                         </div>
                         <div class="pv-section">
                             <div class="pv-card"></div>
@@ -860,8 +872,8 @@ span.flatpickr-weekday { color: var(--admin-text-muted); font-weight: 600; font-
                         </div>
                         <div class="pv-hero">
                             <div class="pv-hero-text">J &amp; S</div>
-                            <div class="pv-rule"></div>
                             <div class="pv-sub">MMXXVI</div>
+                            <div class="pv-rule"></div>
                         </div>
                         <div class="pv-section">
                             <div class="pv-card"></div>
@@ -894,8 +906,8 @@ span.flatpickr-weekday { color: var(--admin-text-muted); font-weight: 600; font-
                         </div>
                         <div class="pv-hero">
                             <div class="pv-hero-text">J &amp; S</div>
-                            <div class="pv-rule"></div>
                             <div class="pv-sub">2026</div>
+                            <div class="pv-rule"></div>
                         </div>
                         <div class="pv-section">
                             <div class="pv-card"></div>
@@ -928,8 +940,8 @@ span.flatpickr-weekday { color: var(--admin-text-muted); font-weight: 600; font-
                         </div>
                         <div class="pv-hero">
                             <div class="pv-hero-text">J &amp; S</div>
-                            <div class="pv-rule"></div>
                             <div class="pv-sub">2026</div>
+                            <div class="pv-rule"></div>
                         </div>
                         <div class="pv-section">
                             <div class="pv-card"></div>
@@ -962,8 +974,8 @@ span.flatpickr-weekday { color: var(--admin-text-muted); font-weight: 600; font-
                         </div>
                         <div class="pv-hero">
                             <div class="pv-hero-text">J &amp; S</div>
-                            <div class="pv-rule"></div>
                             <div class="pv-sub">MMXXVI</div>
+                            <div class="pv-rule"></div>
                         </div>
                         <div class="pv-section">
                             <div class="pv-card"></div>
@@ -976,6 +988,7 @@ span.flatpickr-weekday { color: var(--admin-text-muted); font-weight: 600; font-
                 <div class="layout-card-info">
                     <strong>Luxe</strong>
                     <span>Dark &middot; Moody &middot; Gold-accented</span>
+                    <span style="display:block;margin-top:0.3rem;font-size:0.7rem;color:var(--admin-text-muted);font-style:italic;">Background &amp; text colours are fixed for this theme.</span>
                 </div>
             </div>
 
@@ -1010,6 +1023,17 @@ span.flatpickr-weekday { color: var(--admin-text-muted); font-weight: 600; font-
             <button type="button" class="preset-chip" data-theme="ocean">
                 <div class="chip-dot" style="background:#0e4c7a;"></div> Ocean Breeze
             </button>
+            <div id="customChips"></div>
+            <button type="button" class="preset-chip" id="saveCustomBtn" style="border-style:dashed;color:var(--admin-accent);">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+                Save as custom&hellip;
+            </button>
+        </div>
+        <div id="saveCustomForm" style="display:none;align-items:center;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+            <input type="text" id="customThemeName" placeholder="Palette name"
+                   style="padding:0.4rem 0.7rem;border:1.5px solid var(--admin-border);border-radius:20px;font-size:0.82rem;font-family:inherit;outline:none;width:160px;">
+            <button type="button" id="confirmSaveCustom" class="preset-chip" style="border-color:var(--admin-accent);color:var(--admin-accent);">Save</button>
+            <button type="button" id="cancelSaveCustom" class="preset-chip">Cancel</button>
         </div>
 
         <div class="color-grid" id="colorPickers">
@@ -1045,6 +1069,94 @@ span.flatpickr-weekday { color: var(--admin-text-muted); font-weight: 600; font-
                 <label for="footer_text_color">Footer Text</label>
                 <input type="color" id="footer_text_color" name="footer_text_color" value="{{ wedding_config.footer_text_color }}">
             </div>
+        </div>
+        </div><!-- /card -->
+
+        <!-- Hero Image -->
+        <div class="settings-card">
+        <p class="settings-card-title">Hero Image</p>
+        <p style="font-size:0.83rem;color:var(--admin-text-light);margin-bottom:1.25rem;">
+            Replace the solid colour banner with a photo. The colour overlay is applied on top so text stays readable.
+        </p>
+
+        {% if wedding_config.hero_image_filename %}
+        <div style="margin-bottom:1.25rem;">
+            <img src="{{ url_for('static', filename='uploads/hero/' + wedding_config.hero_image_filename) }}"
+                 style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;display:block;border:1px solid var(--admin-border);"
+                 alt="Hero image">
+        </div>
+        <div style="margin-bottom:1.5rem;">
+            <button type="button" onclick="heroDelete()" class="btn btn-sm" style="background:var(--admin-danger,#e74c3c);color:#fff;border:none;padding:0.35rem 0.85rem;border-radius:5px;cursor:pointer;font-size:0.82rem;">
+                <i class="ph ph-trash"></i> Remove image
+            </button>
+        </div>
+        {% else %}
+        <div style="margin-bottom:1.5rem;">
+            <input type="file" id="heroFileInput" name="hero_image" accept="image/png,image/jpeg,image/gif" style="display:none;"
+                   onchange="heroUpload(this)">
+            <div onclick="document.getElementById('heroFileInput').click()"
+                 id="heroDropzone"
+                 style="border:2px dashed var(--admin-border);border-radius:8px;padding:2rem;text-align:center;cursor:pointer;transition:border-color 0.2s;"
+                 onmouseover="this.style.borderColor='var(--admin-accent)'" onmouseout="this.style.borderColor='var(--admin-border)'">
+                <i class="ph ph-image" style="font-size:2rem;color:var(--admin-text-light);display:block;margin-bottom:0.5rem;"></i>
+                <p style="margin:0;font-size:0.88rem;color:var(--admin-text-light);" id="heroDropzoneLabel">Click to upload a hero image</p>
+                <p style="margin:0.25rem 0 0;font-size:0.78rem;color:var(--admin-text-muted);">JPG, PNG or GIF · Max 60 MB</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <p style="font-size:0.8rem;color:var(--admin-text-muted);margin-bottom:1rem;">
+            These settings apply when an image is set. Adjust them and save to preview.
+        </p>
+
+        <div style="display:flex;flex-direction:column;gap:1.1rem;">
+
+            <div>
+                <label style="font-size:0.83rem;font-weight:600;color:var(--admin-text-dark);display:flex;justify-content:space-between;">
+                    <span>Colour overlay opacity</span>
+                    <span id="overlayVal">{{ ((wedding_config.hero_image_overlay_opacity or 0.4) * 100)|int }}%</span>
+                </label>
+                <input type="range" name="hero_image_overlay_opacity" min="0" max="100"
+                       value="{{ ((wedding_config.hero_image_overlay_opacity or 0.4) * 100)|int }}"
+                       style="width:100%;margin-top:0.4rem;"
+                       oninput="document.getElementById('overlayVal').textContent=this.value+'%'">
+                <p style="font-size:0.75rem;color:var(--admin-text-muted);margin:0.2rem 0 0;">0% = full image, 100% = solid colour</p>
+            </div>
+
+            <div>
+                <label style="font-size:0.83rem;font-weight:600;color:var(--admin-text-dark);display:flex;justify-content:space-between;">
+                    <span>Image blur</span>
+                    <span id="blurVal">{{ wedding_config.hero_image_blur or 0 }}px</span>
+                </label>
+                <input type="range" name="hero_image_blur" min="0" max="20"
+                       value="{{ wedding_config.hero_image_blur or 0 }}"
+                       style="width:100%;margin-top:0.4rem;"
+                       oninput="document.getElementById('blurVal').textContent=this.value+'px'">
+            </div>
+
+            <div>
+                <label style="font-size:0.83rem;font-weight:600;color:var(--admin-text-dark);display:flex;justify-content:space-between;">
+                    <span>Image brightness</span>
+                    <span id="brightnessVal">{{ wedding_config.hero_image_brightness or 100 }}%</span>
+                </label>
+                <input type="range" name="hero_image_brightness" min="50" max="150"
+                       value="{{ wedding_config.hero_image_brightness or 100 }}"
+                       style="width:100%;margin-top:0.4rem;"
+                       oninput="document.getElementById('brightnessVal').textContent=this.value+'%'">
+            </div>
+
+            <div>
+                <label style="font-size:0.83rem;font-weight:600;color:var(--admin-text-dark);display:block;margin-bottom:0.4rem;">Image focus point</label>
+                <select name="hero_image_position" style="width:100%;padding:0.5rem;border:1px solid var(--admin-border);border-radius:5px;font-size:0.88rem;">
+                    {% set pos = wedding_config.hero_image_position or 'center center' %}
+                    <option value="center center" {% if pos == 'center center' %}selected{% endif %}>Centre</option>
+                    <option value="top center"    {% if pos == 'top center'    %}selected{% endif %}>Top</option>
+                    <option value="bottom center" {% if pos == 'bottom center' %}selected{% endif %}>Bottom</option>
+                    <option value="center left"   {% if pos == 'center left'   %}selected{% endif %}>Left</option>
+                    <option value="center right"  {% if pos == 'center right'  %}selected{% endif %}>Right</option>
+                </select>
+            </div>
+
         </div>
         </div><!-- /card -->
 
@@ -1503,20 +1615,41 @@ flatpickr('#after_party_time', {
 })();
 
 /* ── Tab switching ──────────────────────────────────────── */
+function activateTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(function(b) {
+        var match = b.dataset.tab === name;
+        b.classList.toggle('active', match);
+        b.setAttribute('aria-selected', match ? 'true' : 'false');
+    });
+    document.querySelectorAll('.tab-panel').forEach(function(p) {
+        p.classList.remove('active');
+    });
+    var panel = document.getElementById('tab-' + name);
+    if (panel) panel.classList.add('active');
+}
+
+(function() {
+    var stored = sessionStorage.getItem('wedding_settings_tab');
+    sessionStorage.removeItem('wedding_settings_tab');
+    var hash = window.location.hash.replace('#', '');
+    var tab = stored || hash;
+    if (tab && document.getElementById('tab-' + tab)) {
+        activateTab(tab);
+        history.replaceState(null, '', '#' + tab);
+    }
+})();
+
 document.querySelectorAll('.tab-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var target = this.dataset.tab;
-        document.querySelectorAll('.tab-btn').forEach(function(b) {
-            b.classList.remove('active');
-            b.setAttribute('aria-selected', 'false');
-        });
-        document.querySelectorAll('.tab-panel').forEach(function(p) {
-            p.classList.remove('active');
-        });
-        this.classList.add('active');
-        this.setAttribute('aria-selected', 'true');
-        document.getElementById('tab-' + target).classList.add('active');
+        activateTab(target);
+        history.replaceState(null, '', '#' + target);
     });
+});
+
+document.getElementById('settingsForm').addEventListener('submit', function() {
+    var active = document.querySelector('.tab-btn.active');
+    if (active) sessionStorage.setItem('wedding_settings_tab', active.dataset.tab);
 });
 
 /* ── Layout card selection ──────────────────────────────── */
@@ -1622,6 +1755,116 @@ document.getElementById('presetStrip').querySelectorAll('.preset-chip').forEach(
     });
 });
 
+/* ── Custom palette save/load ───────────────────────────── */
+(function () {
+    var COLOR_FIELDS = [
+        'primary_color','primary_text_color','accent_color','gold_accent',
+        'nav_text_color','button_color','footer_background_color','footer_text_color'
+    ];
+    var STORAGE_KEY = 'wedding_custom_palettes';
+
+    function readCurrentColors() {
+        var out = {};
+        COLOR_FIELDS.forEach(function (k) {
+            var el = document.getElementById(k);
+            if (el) out[k] = el.value;
+        });
+        return out;
+    }
+
+    function applyColors(colors) {
+        COLOR_FIELDS.forEach(function (k) {
+            var el = document.getElementById(k);
+            if (el && colors[k]) el.value = colors[k];
+        });
+        updatePreviews();
+    }
+
+    function loadCustomPalettes() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+        catch (e) { return {}; }
+    }
+
+    function saveCustomPalettes(palettes) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(palettes));
+    }
+
+    function renderCustomChips() {
+        var container = document.getElementById('customChips');
+        container.innerHTML = '';
+        var palettes = loadCustomPalettes();
+        Object.keys(palettes).forEach(function (name) {
+            var colors = palettes[name];
+            var wrap = document.createElement('span');
+            wrap.className = 'custom-chip-wrap';
+
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'preset-chip';
+            var dot = document.createElement('div');
+            dot.className = 'chip-dot';
+            dot.style.background = colors.primary_color || '#999';
+            btn.appendChild(dot);
+            btn.appendChild(document.createTextNode(' ' + name));
+            btn.addEventListener('click', function () {
+                applyColors(colors);
+                document.querySelectorAll('.preset-chip').forEach(function (c) { c.classList.remove('active-preset'); });
+                btn.classList.add('active-preset');
+            });
+
+            var del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'custom-chip-del';
+            del.title = 'Delete ' + name;
+            del.innerHTML = '&times;';
+            del.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var p = loadCustomPalettes();
+                delete p[name];
+                saveCustomPalettes(p);
+                renderCustomChips();
+            });
+
+            wrap.appendChild(btn);
+            wrap.appendChild(del);
+            container.appendChild(wrap);
+        });
+    }
+
+    var saveBtn    = document.getElementById('saveCustomBtn');
+    var saveForm   = document.getElementById('saveCustomForm');
+    var nameInput  = document.getElementById('customThemeName');
+    var confirmBtn = document.getElementById('confirmSaveCustom');
+    var cancelBtn  = document.getElementById('cancelSaveCustom');
+
+    saveBtn.addEventListener('click', function () {
+        saveForm.style.display = 'flex';
+        nameInput.value = '';
+        nameInput.focus();
+    });
+
+    cancelBtn.addEventListener('click', function () {
+        saveForm.style.display = 'none';
+    });
+
+    confirmBtn.addEventListener('click', function () {
+        var name = nameInput.value.trim();
+        if (!name) { nameInput.focus(); return; }
+        var palettes = loadCustomPalettes();
+        palettes[name] = readCurrentColors();
+        saveCustomPalettes(palettes);
+        renderCustomChips();
+        saveForm.style.display = 'none';
+    });
+
+    nameInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') confirmBtn.click();
+        if (e.key === 'Escape') cancelBtn.click();
+    });
+
+    renderCustomChips();
+})();
+
 /* ── Event section show/hide ────────────────────────────── */
 (function () {
     var sections = [
@@ -1711,5 +1954,30 @@ document.getElementById('presetStrip').querySelectorAll('.preset-chip').forEach(
 
     updateSmtp();
 })();
+
+function heroUpload(input) {
+    if (!input.files || !input.files[0]) return;
+    var label = document.getElementById('heroDropzoneLabel');
+    if (label) label.textContent = 'Uploading…';
+    var fd = new FormData();
+    fd.append('hero_image', input.files[0]);
+    fetch('{{ url_for("admin_hero_image_upload") }}', {method: 'POST', body: fd})
+        .then(function() {
+            sessionStorage.setItem('wedding_settings_tab', 'appearance');
+            window.location.href = '{{ url_for("admin_wedding_settings") }}';
+        })
+        .catch(function() {
+            if (label) label.textContent = 'Upload failed — please try again';
+        });
+}
+
+function heroDelete() {
+    if (!confirm('Remove the hero image?')) return;
+    fetch('{{ url_for("admin_hero_image_delete") }}', {method: 'POST'})
+        .then(function() {
+            sessionStorage.setItem('wedding_settings_tab', 'appearance');
+            window.location.href = '{{ url_for("admin_wedding_settings") }}';
+        });
+}
 </script>
 {% endblock %}

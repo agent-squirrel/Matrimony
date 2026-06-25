@@ -70,6 +70,7 @@ app.config['MAIL_DEFAULT_SENDER'] = ('Wedding', '')
 # Photo upload configuration
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads', 'photos')
 FAVICON_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads', 'favicon')
+HERO_IMAGE_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads', 'hero')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 FAVICON_EXTENSIONS = {'ico', 'png', 'jpg', 'jpeg', 'svg'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -78,6 +79,7 @@ app.config['MAX_CONTENT_LENGTH'] = 60 * 1024 * 1024  #60MB max file size
 # Ensure upload folders exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(FAVICON_FOLDER, exist_ok=True)
+os.makedirs(HERO_IMAGE_FOLDER, exist_ok=True)
 
 mail = Mail(app)
 
@@ -166,6 +168,12 @@ class WeddingConfig(db.Model):
     show_admin_link = db.Column(db.Boolean, default=True)
     # Favicon
     favicon_filename = db.Column(db.String(200), nullable=True)
+    # Hero image
+    hero_image_filename = db.Column(db.String(200), nullable=True)
+    hero_image_overlay_opacity = db.Column(db.Float, default=0.4)
+    hero_image_blur = db.Column(db.Integer, default=0)
+    hero_image_brightness = db.Column(db.Integer, default=100)
+    hero_image_position = db.Column(db.String(50), default='center center')
     # Twitch stream
     twitch_enabled = db.Column(db.Boolean, default=False)
     twitch_channel = db.Column(db.String(200), nullable=True)
@@ -191,7 +199,7 @@ class Challenge(db.Model):
 class ChallengeAssignment(db.Model):
     __tablename__ = 'challenge_assignments'
     id = db.Column(db.Integer, primary_key=True)
-    guest_name = db.Column(db.String(200), nullable=False, unique=True, index=True)
+    guest_name = db.Column(db.String(200), nullable=False, index=True)
     challenge = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -252,6 +260,11 @@ def ensure_wedding_config_columns():
         'photo_challenge_enabled': "ALTER TABLE wedding_config ADD COLUMN photo_challenge_enabled BOOLEAN NOT NULL DEFAULT TRUE",
         'photo_challenge_unlock_mode': "ALTER TABLE wedding_config ADD COLUMN photo_challenge_unlock_mode VARCHAR(20) NOT NULL DEFAULT 'wedding_day'",
         'photo_challenge_unlock_date': "ALTER TABLE wedding_config ADD COLUMN photo_challenge_unlock_date DATETIME",
+        'hero_image_filename': "ALTER TABLE wedding_config ADD COLUMN hero_image_filename VARCHAR(200)",
+        'hero_image_overlay_opacity': "ALTER TABLE wedding_config ADD COLUMN hero_image_overlay_opacity FLOAT NOT NULL DEFAULT 0.4",
+        'hero_image_blur': "ALTER TABLE wedding_config ADD COLUMN hero_image_blur INT NOT NULL DEFAULT 0",
+        'hero_image_brightness': "ALTER TABLE wedding_config ADD COLUMN hero_image_brightness INT NOT NULL DEFAULT 100",
+        'hero_image_position': "ALTER TABLE wedding_config ADD COLUMN hero_image_position VARCHAR(50) NOT NULL DEFAULT 'center center'",
     }
 
     with db.engine.connect() as connection:
@@ -532,9 +545,14 @@ def site_login():
     
     if request.method == 'POST':
         password = request.form.get('password', '')
-        correct_password = wed_cfg.site_password or ''
-        
-        if password == correct_password:
+        stored = wed_cfg.site_password or ''
+
+        if stored.startswith(('scrypt:', 'pbkdf2:')):
+            authenticated = check_password_hash(stored, password)
+        else:
+            authenticated = password == stored
+
+        if authenticated:
             session['site_authenticated'] = True
             session.permanent = True  # Keep session across browser restarts
             next_page = request.args.get('next')
@@ -598,38 +616,27 @@ def get_challenge():
     """Get a random photo challenge for a guest"""
     if not is_photo_challenge_unlocked():
         return jsonify({'success': False, 'message': 'Photo challenges are not available yet!'}), 403
-    
+
     data = request.get_json()
     guest_name = data.get('name', '').strip()
-    
+    exclude = data.get('exclude', [])  # challenge names to skip (used for reroll)
+
     if not guest_name:
         return jsonify({'success': False, 'message': 'Please enter your name'}), 400
-    
-    # Check if guest already has a challenge
-    existing = ChallengeAssignment.query.filter_by(guest_name=guest_name).first()
-    
-    if existing:
-        challenge = existing.challenge
-    else:
-        # Get available challenges from database, fallback to YAML config
-        available_challenges = Challenge.query.all()
-        
-        if not available_challenges:
-            # Fallback to YAML config if no challenges in DB
-            available_challenges = config.get('photo_challenges', [])
-            if not available_challenges:
-                return jsonify({'success': False, 'message': 'No challenges available'}), 500
-            challenge = random.choice(available_challenges)
-        else:
-            # Pick a random challenge from database
-            challenge_obj = random.choice(available_challenges)
-            challenge = challenge_obj.name
-        
-        # Save to database
-        assignment = ChallengeAssignment(guest_name=guest_name, challenge=challenge)
-        db.session.add(assignment)
-        db.session.commit()
-    
+
+    available_challenges = Challenge.query.all()
+
+    if not available_challenges:
+        return jsonify({'success': False, 'message': 'No challenges available'}), 500
+
+    candidates = [c for c in available_challenges if c.name not in exclude] or available_challenges
+    challenge = random.choice(candidates).name
+
+    # Record in DB for admin visibility
+    assignment = ChallengeAssignment(guest_name=guest_name, challenge=challenge)
+    db.session.add(assignment)
+    db.session.commit()
+
     return jsonify({
         'success': True,
         'challenge': challenge,
@@ -1255,6 +1262,14 @@ def inject_template_globals():
     if site_layout not in {'classic', 'editorial', 'minimal', 'romantic', 'luxe'}:
         site_layout = 'classic'
 
+    icon_weight = {
+        'classic':   'ph',
+        'romantic':  'ph',
+        'editorial': 'ph-light',
+        'minimal':   'ph-light',
+        'luxe':      'ph-thin',
+    }.get(site_layout, 'ph')
+
     return {
         'current_year': datetime.now().year,
         'site_title': site_title,
@@ -1270,6 +1285,7 @@ def inject_template_globals():
         'footer_background_color': footer_background_color,
         'footer_text_color': footer_text_color,
         'site_layout': site_layout,
+        'icon_weight': icon_weight,
         'show_details_tab': show_details_tab,
         'show_admin_link': show_admin_link,
         'twitch_enabled': twitch_enabled,
@@ -1504,6 +1520,24 @@ def admin_wedding_settings():
             wedding_cfg.gold_accent = request.form.get('gold_accent', wedding_cfg.gold_accent)
             wedding_cfg.footer_background_color = request.form.get('footer_background_color', wedding_cfg.footer_background_color)
             wedding_cfg.footer_text_color = request.form.get('footer_text_color', wedding_cfg.footer_text_color)
+
+            # Hero image display settings
+            try:
+                wedding_cfg.hero_image_overlay_opacity = max(0.0, min(1.0, int(request.form.get('hero_image_overlay_opacity', 40)) / 100))
+            except (ValueError, TypeError):
+                pass
+            try:
+                wedding_cfg.hero_image_blur = max(0, min(20, int(request.form.get('hero_image_blur', 0))))
+            except (ValueError, TypeError):
+                pass
+            try:
+                wedding_cfg.hero_image_brightness = max(50, min(150, int(request.form.get('hero_image_brightness', 100))))
+            except (ValueError, TypeError):
+                pass
+            hero_pos = request.form.get('hero_image_position', 'center center')
+            if hero_pos in {'center center', 'top center', 'bottom center', 'center left', 'center right'}:
+                wedding_cfg.hero_image_position = hero_pos
+
             wedding_cfg.show_ceremony = 'show_ceremony' in request.form
             wedding_cfg.show_reception = 'show_reception' in request.form
             wedding_cfg.show_after_party = 'show_after_party' in request.form
@@ -1535,7 +1569,7 @@ def admin_wedding_settings():
             wedding_cfg.site_password_protected = 'site_password_protected' in request.form
             new_password = request.form.get('site_password', '')
             if new_password:
-                wedding_cfg.site_password = new_password
+                wedding_cfg.site_password = generate_password_hash(new_password)
 
             # Admin link
             wedding_cfg.show_admin_link = 'show_admin_link' in request.form
@@ -1639,6 +1673,49 @@ def admin_favicon_delete():
         db.session.commit()
     flash('Favicon removed.', 'success')
     return redirect(url_for('admin_wedding_settings') + '#tab-site')
+
+
+@app.route('/admin/hero-image/upload', methods=['POST'])
+@admin_required
+def admin_hero_image_upload():
+    """Upload a hero banner image"""
+    if 'hero_image' not in request.files:
+        flash('No file selected.', 'error')
+        return redirect(url_for('admin_wedding_settings') + '#tab-appearance')
+    f = request.files['hero_image']
+    if not f or f.filename == '':
+        flash('No file selected.', 'error')
+        return redirect(url_for('admin_wedding_settings') + '#tab-appearance')
+    ext = f.filename.rsplit('.', 1)[-1].lower() if '.' in f.filename else ''
+    if ext not in ALLOWED_EXTENSIONS:
+        flash(f'Unsupported file type. Allowed: {", ".join(sorted(ALLOWED_EXTENSIONS))}.', 'error')
+        return redirect(url_for('admin_wedding_settings') + '#tab-appearance')
+    wed_cfg = get_wedding_config()
+    if wed_cfg.hero_image_filename:
+        old = os.path.join(HERO_IMAGE_FOLDER, wed_cfg.hero_image_filename)
+        if os.path.exists(old):
+            os.remove(old)
+    filename = f'hero.{ext}'
+    f.save(os.path.join(HERO_IMAGE_FOLDER, filename))
+    wed_cfg.hero_image_filename = filename
+    db.session.commit()
+    flash('Hero image updated.', 'success')
+    return redirect(url_for('admin_wedding_settings') + '#tab-appearance')
+
+
+@app.route('/admin/hero-image/delete', methods=['POST'])
+@admin_required
+def admin_hero_image_delete():
+    """Remove the hero banner image"""
+    wed_cfg = get_wedding_config()
+    if wed_cfg.hero_image_filename:
+        path = os.path.join(HERO_IMAGE_FOLDER, wed_cfg.hero_image_filename)
+        if os.path.exists(path):
+            os.remove(path)
+        wed_cfg.hero_image_filename = None
+        db.session.commit()
+    flash('Hero image removed.', 'success')
+    return redirect(url_for('admin_wedding_settings') + '#tab-appearance')
 
 
 @app.route('/admin/challenges', methods=['GET', 'POST'])

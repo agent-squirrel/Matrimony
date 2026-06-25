@@ -125,6 +125,31 @@ a:hover {
     padding: 4rem 2rem;
 }
 
+/* Hero image layers — sit behind all hero content */
+.hero-with-image {
+    position: relative;
+    overflow: hidden;
+}
+.hero-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transform: scale(1.04); /* prevents visible edge when blur is applied */
+    z-index: 0;
+}
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: var(--primary-color);
+    z-index: 1;
+}
+.hero-with-image .container,
+.hero-with-image .hero-content {
+    position: relative;
+    z-index: 2;
+}
+
 .hero-content {
     animation: fadeInUp 1s ease;
 }

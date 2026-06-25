@@ -117,7 +117,7 @@
 {% block content %}
 <div class="page-header">
     <div class="container">
-        <h1>📸 Photo Challenge</h1>
+        <h1><i class="{{ icon_weight }} ph-camera"></i> Photo Challenge</h1>
         <div class="decorative-line"></div>
         <p>Help capture {{ couple_names }}'s special day!</p>
     </div>
@@ -164,16 +164,21 @@
         
         <div id="challenge-display" class="hidden">
             <div class="challenge-box">
-                <h2>Hello, <span id="display-name"></span>! 👋</h2>
+                <h2>Hello, <span id="display-name"></span>! <i class="{{ icon_weight }} ph-hand-waving"></i></h2>
                 <p>Here's your photo challenge:</p>
                 <div class="challenge-text" id="challenge-text"></div>
+                <div style="text-align:center;margin-top:1rem;">
+                    <button onclick="rerollChallenge()" id="reroll-btn" class="btn" style="background:none;border:1px solid var(--border-color);color:var(--text-light);font-size:0.85rem;padding:0.4rem 1rem;">
+                        <i class="{{ icon_weight }} ph-arrows-clockwise"></i> Try a different challenge
+                    </button>
+                </div>
             </div>
             
             <div class="challenge-box">
                 <h3>Upload Your Photo</h3>
                 <div id="upload-area" class="upload-area">
                     <input type="file" id="photo-input" accept="image/*" class="hidden">
-                    <p>📷 Click or drag & drop to upload</p>
+                    <p><i class="{{ icon_weight }} ph-camera"></i> Click or drag &amp; drop to upload</p>
                     <p style="font-size: 0.9rem; color: var(--text-light);">Max file size: 16MB</p>
                 </div>
                 <img id="preview" class="preview-image hidden">
@@ -222,37 +227,72 @@
     let currentChallenge = '';
     let guestName = '';
     let selectedFile = null;
-    
-    async function getChallenge() {
+
+    const COOKIE_NAME = 'pc_session';
+
+    function setCookie(name, value, days) {
+        var d = new Date();
+        d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+        document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + d.toUTCString() + '; path=/';
+    }
+
+    function getCookie(name) {
+        var prefix = name + '=';
+        return document.cookie.split(';').reduce(function(found, part) {
+            var c = part.trim();
+            return c.indexOf(prefix) === 0 ? decodeURIComponent(c.slice(prefix.length)) : found;
+        }, null);
+    }
+
+    function showChallenge(name, challenge) {
+        guestName = name;
+        currentChallenge = challenge;
+        document.getElementById('display-name').textContent = name;
+        document.getElementById('challenge-text').textContent = challenge;
+        document.getElementById('name-form').classList.add('hidden');
+        document.getElementById('challenge-display').classList.remove('hidden');
+    }
+
+    // Restore from cookie on page load
+    (function() {
+        var stored = getCookie(COOKIE_NAME);
+        if (stored) {
+            try {
+                var data = JSON.parse(stored);
+                if (data.name && data.challenge) {
+                    showChallenge(data.name, data.challenge);
+                }
+            } catch(e) {}
+        }
+    })();
+
+    async function getChallenge(exclude) {
         const nameInput = document.getElementById('guest-name');
-        const name = nameInput.value.trim();
+        const name = guestName || nameInput.value.trim();
         const errorDiv = document.getElementById('name-error');
-        
+
         if (!name) {
             errorDiv.textContent = 'Please enter your name';
             errorDiv.classList.remove('hidden');
             return;
         }
-        
+
         errorDiv.classList.add('hidden');
-        
+
         try {
             const response = await fetch('/api/get-challenge', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({name: name})
+                body: JSON.stringify({name: name, exclude: exclude || []})
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
-                guestName = data.guest_name;
-                currentChallenge = data.challenge;
-                
-                document.getElementById('display-name').textContent = guestName;
-                document.getElementById('challenge-text').textContent = currentChallenge;
-                document.getElementById('name-form').classList.add('hidden');
-                document.getElementById('challenge-display').classList.remove('hidden');
+                setCookie(COOKIE_NAME, JSON.stringify({name: data.guest_name, challenge: data.challenge}), 1);
+                showChallenge(data.guest_name, data.challenge);
+                // Reset upload state when challenge changes
+                resetUpload();
             } else {
                 errorDiv.textContent = data.message;
                 errorDiv.classList.remove('hidden');
@@ -261,6 +301,26 @@
             errorDiv.textContent = 'Error getting challenge. Please try again.';
             errorDiv.classList.remove('hidden');
         }
+    }
+
+    function rerollChallenge() {
+        getChallenge([currentChallenge]);
+    }
+
+    function resetUpload() {
+        selectedFile = null;
+        const preview = document.getElementById('preview');
+        const uploadBtn = document.getElementById('upload-btn');
+        const messageDiv = document.getElementById('upload-message');
+        const photoInput = document.getElementById('photo-input');
+        preview.classList.add('hidden');
+        preview.src = '';
+        uploadBtn.classList.add('hidden');
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = 'Submit Photo';
+        messageDiv.classList.add('hidden');
+        messageDiv.textContent = '';
+        photoInput.value = '';
     }
     
     // File upload handling
