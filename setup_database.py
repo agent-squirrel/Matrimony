@@ -107,7 +107,7 @@ def setup_database():
         print("\nSetup complete.")
         print("Next: run the app and visit /admin/setup to create your admin account.")
     else:
-        print("\nDatabase created but table setup failed — check the errors above.")
+        print("\nDatabase created but table setup failed - check the errors above.")
 
 
 if __name__ == '__main__':

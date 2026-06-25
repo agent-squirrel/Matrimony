@@ -125,7 +125,7 @@ a:hover {
     padding: 4rem 2rem;
 }
 
-/* Hero image layers — sit behind all hero content */
+/* Hero image layers - sit behind all hero content */
 .hero-with-image {
     position: relative;
     overflow: hidden;

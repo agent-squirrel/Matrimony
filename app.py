@@ -15,6 +15,7 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 import qrcode
 import threading
+import time
 
 load_dotenv()
 
@@ -39,7 +40,7 @@ def _build_db_url():
 _secret_key = os.environ.get('SECRET_KEY', '')
 if not _secret_key:
     _secret_key = secrets.token_hex(32)
-    print("WARNING: SECRET_KEY env var not set — sessions will not persist across restarts. Set it in your .env file.")
+    print("WARNING: SECRET_KEY env var not set - sessions will not persist across restarts. Set it in your .env file.")
 
 app.config['SECRET_KEY'] = _secret_key
 app.config['SQLALCHEMY_DATABASE_URI'] = _build_db_url()
@@ -344,11 +345,22 @@ def apply_mail_config(wed_cfg):
         app.config['CONTACT_EMAIL'] = wed_cfg.mail_contact_email
 
 
-# Create tables
+# Create tables - retry loop handles race conditions when an existing
+# postgres volume causes a brief delay before the DB accepts connections.
 with app.app_context():
-    db.create_all()
-    ensure_wedding_config_columns()
-    apply_mail_config(WeddingConfig.query.first())
+    for _attempt in range(1, 11):
+        try:
+            db.create_all()
+            ensure_wedding_config_columns()
+            apply_mail_config(WeddingConfig.query.first())
+            break
+        except Exception as _e:
+            if _attempt < 10:
+                print(f"Database not ready (attempt {_attempt}/10): {_e}", flush=True)
+                time.sleep(3)
+            else:
+                print(f"ERROR: Could not initialise database after 10 attempts: {_e}", flush=True)
+                raise
 
 # Flask-Login user loader
 @login_manager.user_loader
@@ -497,7 +509,7 @@ def is_wedding_day():
 
 
 def get_photo_challenge_unlock_dt():
-    """Return the datetime when the photo challenge unlocks (never None — falls back to far future)."""
+    """Return the datetime when the photo challenge unlocks (never None - falls back to far future)."""
     wed_cfg = get_wedding_config()
     if not wed_cfg:
         return datetime(2099, 12, 31)

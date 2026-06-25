@@ -6,9 +6,7 @@
 
 services:
   app:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
+    image: ghcr.io/agent-squirrel/matrimony:${IMAGE_TAG:-latest}
     ports:
       - "${APP_PORT:-8000}:8000"
     environment:

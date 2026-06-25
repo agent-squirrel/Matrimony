@@ -1,32 +1,36 @@
 services:
   app:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
+    name: matrimony
+    image: ghcr.io/agent-squirrel/matrimony:${IMAGE_TAG:-latest}
+    # To build locally instead, replace the image line above with:
+    # build:
+    #   context: ..
+    #   dockerfile: docker/Dockerfile
     ports:
       - "${APP_PORT:-8000}:8000"
     environment:
-      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in your .env file}
-      DB_HOST: ${DB_HOST:-localhost}
-      DB_PORT: ${DB_PORT:-5432}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in docker/.env}
+      DB_HOST: db
+      DB_PORT: 5432
       DB_USER: ${DB_USER:-wedding_user}
       DB_PASS: ${DB_PASS:-wedding_password}
       DB_NAME: ${DB_NAME:-wedding_db}
     volumes:
-      - uploads:/app/static/uploads
+      - matrimony-uploads:/app/static/uploads
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
 
   db:
+    name: matrimony-db
     image: postgres:16
     environment:
       POSTGRES_DB: ${DB_NAME:-wedding_db}
       POSTGRES_USER: ${DB_USER:-wedding_user}
       POSTGRES_PASSWORD: ${DB_PASS:-wedding_password}
     volumes:
-      - dbdata:/var/lib/postgresql/data
+      - matrimony-dbdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-wedding_user} -d ${DB_NAME:-wedding_db}"]
       interval: 10s
@@ -35,5 +39,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  uploads:
-  dbdata:
+  matrimony-uploads:
+  matrimony-dbdata:
