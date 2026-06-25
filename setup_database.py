@@ -6,8 +6,7 @@ Usage:
   python setup_database.py               # full setup: create DB + user + tables
   python setup_database.py --tables-only # create tables only (used by Docker entrypoint)
 
-Reads DB_TYPE (mariadb or postgres), DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME
-from the environment or a .env file.
+Reads DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME from the environment or a .env file.
 """
 
 import sys
@@ -21,12 +20,9 @@ load_dotenv()
 
 
 def _db_params():
-    db_type = os.environ.get('DB_TYPE', 'mariadb').lower()
-    is_pg = db_type in ('postgres', 'postgresql')
     return {
-        'type': 'postgres' if is_pg else 'mariadb',
         'host': os.environ.get('DB_HOST', 'localhost'),
-        'port': int(os.environ.get('DB_PORT', '5432' if is_pg else '3306')),
+        'port': int(os.environ.get('DB_PORT', '5432')),
         'user': os.environ.get('DB_USER', 'wedding_user'),
         'password': os.environ.get('DB_PASS', 'wedding_password'),
         'name': os.environ.get('DB_NAME', 'wedding_db'),
@@ -56,39 +52,15 @@ def create_tables(retries=10, delay=3):
                 return False
 
 
-def setup_mariadb(p):
-    """Create MariaDB/MySQL database and user. Requires root access."""
-    import pymysql
-
-    root_password = input("Enter MySQL/MariaDB root password: ")
-    try:
-        conn = pymysql.connect(
-            host=p['host'], port=p['port'], user='root', password=root_password,
-        )
-        cur = conn.cursor()
-        cur.execute(
-            f"CREATE DATABASE IF NOT EXISTS `{p['name']}` "
-            f"CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
-        )
-        cur.execute(
-            f"CREATE USER IF NOT EXISTS '{p['user']}'@'%' IDENTIFIED BY '{p['password']}'"
-        )
-        cur.execute(f"GRANT ALL PRIVILEGES ON `{p['name']}`.* TO '{p['user']}'@'%'")
-        cur.execute("FLUSH PRIVILEGES")
-        cur.close()
-        conn.close()
-        print("Database and user created.")
-    except pymysql.Error as e:
-        print(f"MariaDB error: {e}")
-        sys.exit(1)
-
-
-def setup_postgres(p):
+def setup_database():
     """Create PostgreSQL database and user. Requires superuser (postgres) access."""
     import psycopg2
     from psycopg2 import sql
 
+    p = _db_params()
+    print(f"Setting up PostgreSQL database '{p['name']}' on {p['host']}:{p['port']}")
     superuser_pass = input("Enter PostgreSQL superuser (postgres) password: ")
+
     try:
         conn = psycopg2.connect(
             host=p['host'], port=p['port'],
@@ -130,16 +102,6 @@ def setup_postgres(p):
     except psycopg2.Error as e:
         print(f"PostgreSQL error: {e}")
         sys.exit(1)
-
-
-def setup_database():
-    p = _db_params()
-    print(f"Setting up {p['type']} database '{p['name']}' on {p['host']}:{p['port']}")
-
-    if p['type'] == 'postgres':
-        setup_postgres(p)
-    else:
-        setup_mariadb(p)
 
     if create_tables():
         print("\nSetup complete.")

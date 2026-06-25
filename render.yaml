@@ -15,5 +15,5 @@ services:
 
 databases:
   - name: matrimony-db
-    databaseName: wedding_db
+    databaseName: matrimony
     plan: free

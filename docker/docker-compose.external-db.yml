@@ -1,7 +1,7 @@
-# Use this file when connecting to an existing database instead of spinning one up.
+# Use this file when connecting to an existing PostgreSQL instance instead of
+# spinning one up alongside the app.
 #
 #   cp .env.example .env   # fill in DB_HOST, DB_USER, DB_PASS, DB_NAME, SECRET_KEY
-#   Set DB_TYPE=postgres or DB_TYPE=mariadb (default: mariadb)
 #   docker compose -f docker/docker-compose.external-db.yml --env-file .env up -d
 
 services:
@@ -15,9 +15,8 @@ services:
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in your .env file}
       # Supply either DATABASE_URL or the individual DB_* vars below
       DATABASE_URL: ${DATABASE_URL:-}
-      DB_TYPE: ${DB_TYPE:-mariadb}
       DB_HOST: ${DB_HOST:-localhost}
-      DB_PORT: ${DB_PORT:-3306}
+      DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-wedding_user}
       DB_PASS: ${DB_PASS:-wedding_password}
       DB_NAME: ${DB_NAME:-wedding_db}
