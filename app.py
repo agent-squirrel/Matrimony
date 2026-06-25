@@ -180,7 +180,7 @@ class WeddingConfig(db.Model):
     photo_challenge_unlock_mode = db.Column(db.String(20), default='wedding_day')  # 'wedding_day' or 'custom'
     photo_challenge_unlock_date = db.Column(db.DateTime, nullable=True)
     # Timezone for unlock/wedding-day comparisons
-    timezone = db.Column(db.String(50), nullable=False, default='UTC')
+    timezone = db.Column(db.String(50), nullable=False, default=lambda: os.environ.get('DEFAULT_TIMEZONE', 'UTC'))
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -1387,15 +1387,21 @@ def admin_setup():
             wedding_time = request.form.get('wedding_time', '14:00')
             venue = request.form.get('venue', '').strip()
             city = request.form.get('city', '').strip()
-            
+            tz_val = request.form.get('timezone', os.environ.get('DEFAULT_TIMEZONE', 'UTC')).strip()
+            try:
+                ZoneInfo(tz_val)
+            except Exception:
+                tz_val = 'UTC'
+
             if not all([bride, groom, wedding_date_str, venue, city]):
                 flash('Please fill in all required fields', 'error')
-                return render_template('admin/setup.html', step=2)
-            
+                return render_template('admin/setup.html', step=2,
+                                       default_tz=os.environ.get('DEFAULT_TIMEZONE', 'UTC'))
+
             try:
                 # Parse wedding datetime
                 wedding_datetime = datetime.strptime(f"{wedding_date_str} {wedding_time}", '%Y-%m-%d %H:%M')
-                
+
                 # Create wedding config
                 wedding_cfg = WeddingConfig(
                     bride=bride,
@@ -1415,16 +1421,18 @@ def admin_setup():
                     show_reception=True,
                     show_after_party=True,
                     site_title=f"{groom} & {bride} Wedding",
-                    site_layout='classic'
+                    site_layout='classic',
+                    timezone=tz_val,
                 )
                 db.session.add(wedding_cfg)
                 db.session.commit()
-                
+
                 flash('Wedding configuration created! Setup is complete.', 'success')
                 return render_template('admin/setup.html', step=3)
             except Exception as e:
                 flash(f'Error creating wedding configuration: {str(e)}', 'error')
-                return render_template('admin/setup.html', step=2)
+                return render_template('admin/setup.html', step=2,
+                                       default_tz=os.environ.get('DEFAULT_TIMEZONE', 'UTC'))
     
     # Determine which step to show
     admin_count = AdminUser.query.count()
@@ -1432,8 +1440,9 @@ def admin_setup():
         step = 1
     else:
         step = 2
-    
-    return render_template('admin/setup.html', step=step)
+
+    return render_template('admin/setup.html', step=step,
+                           default_tz=os.environ.get('DEFAULT_TIMEZONE', 'UTC'))
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():

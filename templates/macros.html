@@ -1,0 +1,81 @@
+{% macro timezone_select(name, selected, id=None) %}
+{% set tz_groups = [
+    ('UTC', [
+        ('UTC', 'UTC'),
+    ]),
+    ('Europe', [
+        ('Europe/London', 'London / Dublin / Edinburgh (GMT/BST)'),
+        ('Europe/Lisbon', 'Lisbon / Madeira (WET/WEST)'),
+        ('Europe/Paris', 'Paris / Berlin / Rome / Madrid / Amsterdam / Brussels (CET/CEST)'),
+        ('Europe/Helsinki', 'Helsinki / Kyiv / Riga / Tallinn / Athens / Bucharest (EET/EEST)'),
+        ('Europe/Moscow', 'Moscow / Istanbul / Minsk (UTC+3, no DST)'),
+    ]),
+    ('Americas', [
+        ('America/Halifax', 'Halifax / Atlantic Canada (AST/ADT)'),
+        ('America/New_York', 'New York / Toronto / Miami / Boston / Atlanta (ET)'),
+        ('America/Chicago', 'Chicago / Dallas / Houston / Winnipeg (CT)'),
+        ('America/Mexico_City', 'Mexico City / Guadalajara (CST/CDT)'),
+        ('America/Denver', 'Denver / Calgary / Salt Lake City (MT)'),
+        ('America/Phoenix', 'Phoenix / Arizona (MST, no DST)'),
+        ('America/Los_Angeles', 'Los Angeles / Seattle / Vancouver (PT)'),
+        ('America/Anchorage', 'Anchorage / Alaska (AKT)'),
+        ('Pacific/Honolulu', 'Honolulu / Hawaii (HST, no DST)'),
+        ('America/Bogota', 'Bogota / Lima / Quito (UTC-5, no DST)'),
+        ('America/Caracas', 'Caracas / Venezuela (VET, UTC-4)'),
+        ('America/Sao_Paulo', 'Sao Paulo / Brasilia / Rio (BRT, UTC-3)'),
+        ('America/Argentina/Buenos_Aires', 'Buenos Aires / Montevideo (ART, UTC-3)'),
+        ('America/Santiago', 'Santiago, Chile (CLT/CLST)'),
+    ]),
+    ('Middle East', [
+        ('Asia/Riyadh', 'Riyadh / Kuwait / Baghdad (UTC+3, no DST)'),
+        ('Asia/Tehran', 'Tehran / Iran (IRST/IRDT)'),
+        ('Asia/Dubai', 'Dubai / Abu Dhabi / Muscat (GST, UTC+4)'),
+        ('Asia/Kabul', 'Kabul / Afghanistan (AFT, UTC+4:30)'),
+        ('Asia/Karachi', 'Karachi / Pakistan (PKT, UTC+5)'),
+    ]),
+    ('Africa', [
+        ('Africa/Lagos', 'Lagos / Kinshasa / Algiers (WAT, UTC+1)'),
+        ('Africa/Cairo', 'Cairo / Egypt (EET, UTC+2)'),
+        ('Africa/Johannesburg', 'Johannesburg / Cape Town / Harare / Lusaka (SAST, UTC+2)'),
+        ('Africa/Nairobi', 'Nairobi / Addis Ababa / Dar es Salaam / Kampala (EAT, UTC+3)'),
+    ]),
+    ('Asia', [
+        ('Asia/Kolkata', 'Mumbai / Delhi / Kolkata / Colombo (IST, UTC+5:30)'),
+        ('Asia/Kathmandu', 'Kathmandu / Nepal (NPT, UTC+5:45)'),
+        ('Asia/Dhaka', 'Dhaka / Bangladesh (BST, UTC+6)'),
+        ('Asia/Yangon', 'Yangon / Myanmar (MMT, UTC+6:30)'),
+        ('Asia/Bangkok', 'Bangkok / Jakarta / Hanoi / Ho Chi Minh (ICT, UTC+7)'),
+        ('Asia/Singapore', 'Singapore / Kuala Lumpur / Manila / Taipei (SGT, UTC+8)'),
+        ('Asia/Shanghai', 'Beijing / Shanghai / Hong Kong / Macau (CST, UTC+8)'),
+        ('Asia/Tokyo', 'Tokyo (JST, UTC+9)'),
+        ('Asia/Seoul', 'Seoul / Pyongyang (KST, UTC+9)'),
+    ]),
+    ('Australia', [
+        ('Australia/Perth', 'Perth / Western Australia (AWST, UTC+8)'),
+        ('Australia/Eucla', 'Eucla / Caiguna (ACWST, UTC+8:45)'),
+        ('Australia/Darwin', 'Darwin / Northern Territory (ACST, UTC+9:30, no DST)'),
+        ('Australia/Adelaide', 'Adelaide / South Australia (ACST/ACDT)'),
+        ('Australia/Brisbane', 'Brisbane / Queensland (AEST, UTC+10, no DST)'),
+        ('Australia/Sydney', 'Sydney / Melbourne / Hobart / Canberra (AEDT/AEST)'),
+        ('Pacific/Lord_Howe', 'Lord Howe Island (UTC+10:30/+11)'),
+    ]),
+    ('Pacific', [
+        ('Pacific/Port_Moresby', 'Port Moresby / Papua New Guinea (PGT, UTC+10)'),
+        ('Pacific/Guadalcanal', 'Honiara / Solomon Islands (SBT, UTC+11)'),
+        ('Pacific/Auckland', 'Auckland / Wellington / Fiji* (NZST/NZDT)'),
+        ('Pacific/Fiji', 'Suva / Fiji (FJT, UTC+12)'),
+        ('Pacific/Chatham', 'Chatham Islands (CHAST/CHADT, UTC+12:45/+13:45)'),
+        ('Pacific/Apia', 'Apia / Samoa (WST, UTC+13)'),
+        ('Pacific/Tongatapu', 'Nuku\'alofa / Tonga (TOT, UTC+13)'),
+    ]),
+] %}
+<select name="{{ name }}"{% if id %} id="{{ id }}"{% else %} id="{{ name }}"{% endif %}>
+    {% for group_label, zones in tz_groups %}
+    <optgroup label="{{ group_label }}">
+        {% for tz_value, tz_label in zones %}
+        <option value="{{ tz_value }}"{% if selected == tz_value %} selected{% endif %}>{{ tz_label }}</option>
+        {% endfor %}
+    </optgroup>
+    {% endfor %}
+</select>
+{% endmacro %}
