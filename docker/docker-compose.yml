@@ -1,6 +1,6 @@
 services:
   app:
-    name: matrimony
+    container_name: matrimony
     image: ghcr.io/agent-squirrel/matrimony:${IMAGE_TAG:-latest}
     # To build locally instead, replace the image line above with:
     # build:
@@ -23,7 +23,7 @@ services:
     restart: unless-stopped
 
   db:
-    name: matrimony-db
+    container_name: matrimony-db
     image: postgres:16
     environment:
       POSTGRES_DB: ${DB_NAME:-wedding_db}
