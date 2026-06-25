@@ -57,9 +57,7 @@ cp docker/.env.example docker/.env
 docker compose -f docker/docker-compose.yml up -d
 ```
 
-> **Security:** `docker/.env.example` ships with placeholder credentials - always replace `SECRET_KEY`, `DB_USER`, and `DB_PASS` with strong unique values before starting the containers.
-
-> **Image visibility:** the package on `ghcr.io` must be set to **public** (GitHub → your package → Package settings → Change visibility) for the pull to work without authentication. This is a one-time step after the first workflow run.
+> **Security:** `docker/.env.example` ships with placeholder credentials - always replace `SECRET_KEY` and `DB_PASS` with strong unique values before starting the containers.
 
 Open `http://localhost:8000` in your browser. On first run you'll be walked through a short setup wizard.
 
