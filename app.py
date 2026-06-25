@@ -375,6 +375,14 @@ def setup_required():
     """True when initial admin setup has not been completed yet."""
     return AdminUser.query.count() == 0
 
+@app.before_request
+def redirect_to_setup_if_needed():
+    """Redirect any request to the setup wizard until an admin account exists."""
+    if request.endpoint in ('admin_setup', 'static'):
+        return
+    if setup_required():
+        return redirect(url_for('admin_setup'))
+
 def compute_couple_initials(wed_cfg):
     """Build nav initials from configured couple names."""
     groom = (wed_cfg.groom if wed_cfg and wed_cfg.groom else 'A').strip()

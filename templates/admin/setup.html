@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wedding App Setup</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💒</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 120 120%22><circle cx=%2244%22 cy=%2260%22 r=%2232%22 fill=%22none%22 stroke=%22%239C5B5B%22 stroke-width=%229%22/><circle cx=%2276%22 cy=%2260%22 r=%2232%22 fill=%22none%22 stroke=%22%233F3631%22 stroke-width=%229%22/></svg>">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
         :root {
@@ -159,12 +160,9 @@
 <body>
     <div class="setup-container">
         <div class="setup-header">
-            <picture>
-                <source media="(prefers-color-scheme: dark)" srcset="{{ url_for('static', filename='img/matrimony-logo-light.svg') }}">
-                <img src="{{ url_for('static', filename='img/matrimony-logo.svg') }}"
-                     alt="Matrimony"
-                     style="width: 260px; height: auto; margin-bottom: 1.25rem; display: block; margin-left: auto; margin-right: auto;">
-            </picture>
+            <img src="{{ url_for('static', filename='img/matrimony-logo.svg') }}"
+                 alt="Matrimony"
+                 style="width: 260px; height: auto; margin-bottom: 1.25rem; display: block; margin-left: auto; margin-right: auto;">
             <p>Let's get your wedding website ready!</p>
         </div>
         
@@ -243,7 +241,7 @@
             </form>
         {% elif step == 3 %}
             <div class="setup-complete">
-                <div class="setup-complete-icon">✨</div>
+                <div class="setup-complete-icon"><i class="ph ph-sparkle"></i></div>
                 <h2>Setup Complete!</h2>
                 <p>Your wedding website is ready to go. You can now log in to the admin panel to manage your wedding details.</p>
                 <a href="{{ url_for('admin_login') }}" class="btn btn-primary" style="display: inline-block; text-decoration: none; padding: 0.75rem 2rem;">Go to Admin Login</a>
