@@ -13,6 +13,7 @@ build/
 
 # Environment variables
 .env
+docker/.env
 config.yml
 
 # Uploads and data

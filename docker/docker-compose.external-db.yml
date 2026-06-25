@@ -1,8 +1,8 @@
 # Use this file when connecting to an existing PostgreSQL instance instead of
 # spinning one up alongside the app.
 #
-#   cp .env.example .env   # fill in DB_HOST, DB_USER, DB_PASS, DB_NAME, SECRET_KEY
-#   docker compose -f docker/docker-compose.external-db.yml --env-file .env up -d
+#   cp docker/.env.example docker/.env   # fill in DB_HOST, DB_USER, DB_PASS, DB_NAME, SECRET_KEY
+#   docker compose -f docker/docker-compose.external-db.yml up -d
 
 services:
   app:
