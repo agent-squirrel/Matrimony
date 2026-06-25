@@ -2,7 +2,7 @@
 #
 #   cp .env.example .env   # fill in DB_HOST, DB_USER, DB_PASS, DB_NAME, SECRET_KEY
 #   Set DB_TYPE=postgres or DB_TYPE=mariadb (default: mariadb)
-#   docker compose -f docker/docker-compose.external-db.yml up -d
+#   docker compose -f docker/docker-compose.external-db.yml --env-file .env up -d
 
 services:
   app:

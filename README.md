@@ -58,7 +58,7 @@ cp .env.example .env
 # Open .env and set SECRET_KEY to a long random string.
 # The database is handled for you - no other changes needed.
 
-docker compose -f docker/docker-compose.mariadb.yml up -d
+docker compose -f docker/docker-compose.mariadb.yml --env-file .env up -d
 ```
 
 **With PostgreSQL**
@@ -67,7 +67,7 @@ docker compose -f docker/docker-compose.mariadb.yml up -d
 cp .env.example .env
 # Set SECRET_KEY in .env.
 
-docker compose -f docker/docker-compose.postgres.yml up -d
+docker compose -f docker/docker-compose.postgres.yml --env-file .env up -d
 ```
 
 Open `http://localhost:8000` in your browser. On first run you'll be walked through a short setup wizard.
@@ -76,7 +76,7 @@ Open `http://localhost:8000` in your browser. On first run you'll be walked thro
 
 ```bash
 # Fill in DB_TYPE, DB_HOST, DB_USER, DB_PASS, DB_NAME (and optionally DATABASE_URL) in .env
-docker compose -f docker/docker-compose.external-db.yml up -d
+docker compose -f docker/docker-compose.external-db.yml --env-file .env up -d
 ```
 
 ### Option 3 - Manual / venv (self-hosted)
