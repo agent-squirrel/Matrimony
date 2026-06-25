@@ -41,9 +41,7 @@ A beautiful, easy-to-deploy wedding website for you and your partner. Guests can
 
 Render hosts the app and provisions a free PostgreSQL database automatically. No config needed - just connect your GitHub account.
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/YOUR_USERNAME/YOUR_REPO)
-
-> **Before clicking:** push this repo to GitHub, then replace `YOUR_USERNAME/YOUR_REPO` in the badge link above with your actual GitHub path. Render reads `render.yaml` from the repo and sets everything up automatically - including the database and a random `SECRET_KEY`.
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
 > **Note on photo uploads:** Render's free web service uses ephemeral storage, so uploaded photos won't survive a restart. This is fine for trying things out; for a real wedding event use the Docker option below or upgrade to a Render paid plan with a persistent disk.
 
