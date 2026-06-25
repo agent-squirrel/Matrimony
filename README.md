@@ -41,10 +41,11 @@ A beautiful, easy-to-deploy wedding website for you and your partner. Guests can
 
 Render hosts the app and provisions a free PostgreSQL database automatically.
 
+> [!WARNING]
+> **Note on Render free tier:** Render's free web service spins down every 15 minutes, changes to storage are lost on spin down, this includes uploaded photos. The database instance is only free for 30 days. It is advaised to pay for a Render account to continue using services.
+
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
-[!WARNING]
-> **Note on Render free tier:** Render's free web service spins down every 15 minutes, changes to storage are lost on spin down, this includes uploaded photos. The database instance is only free for 30 days. It is advaised to pay for a Render account to continue using services.
 
 ### Option 2 - Docker
 
