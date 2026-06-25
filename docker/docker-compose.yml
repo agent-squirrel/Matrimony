@@ -7,8 +7,8 @@ services:
       - "${APP_PORT:-8000}:8000"
     environment:
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in your .env file}
-      DB_HOST: db
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-localhost}
+      DB_PORT: ${DB_PORT:-5432}
       DB_USER: ${DB_USER:-wedding_user}
       DB_PASS: ${DB_PASS:-wedding_password}
       DB_NAME: ${DB_NAME:-wedding_db}
