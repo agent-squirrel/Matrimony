@@ -655,6 +655,57 @@ span.flatpickr-weekday { color: var(--admin-text-muted); font-weight: 600; font-
                 <input type="time" id="wedding_time" name="wedding_time" value="{{ wedding_time_value }}">
             </div>
         </div>
+        <div class="form-group" style="margin-bottom:1rem;">
+            <label for="timezone">Timezone</label>
+            <select id="timezone" name="timezone">
+                {% set tz_groups = [
+                    ('UTC', [('UTC', 'UTC')]),
+                    ('Europe', [
+                        ('Europe/London', 'London (GMT/BST)'),
+                        ('Europe/Dublin', 'Dublin (GMT/IST)'),
+                        ('Europe/Paris', 'Paris / Berlin / Rome (CET)'),
+                        ('Europe/Helsinki', 'Helsinki / Kyiv (EET)'),
+                        ('Europe/Moscow', 'Moscow (MSK)'),
+                    ]),
+                    ('Americas', [
+                        ('America/New_York', 'New York (ET)'),
+                        ('America/Chicago', 'Chicago (CT)'),
+                        ('America/Denver', 'Denver (MT)'),
+                        ('America/Los_Angeles', 'Los Angeles (PT)'),
+                        ('America/Anchorage', 'Anchorage (AKT)'),
+                        ('Pacific/Honolulu', 'Honolulu (HST)'),
+                        ('America/Toronto', 'Toronto (ET)'),
+                        ('America/Vancouver', 'Vancouver (PT)'),
+                        ('America/Sao_Paulo', 'Sao Paulo (BRT)'),
+                        ('America/Argentina/Buenos_Aires', 'Buenos Aires (ART)'),
+                    ]),
+                    ('Asia / Pacific', [
+                        ('Asia/Dubai', 'Dubai (GST)'),
+                        ('Asia/Kolkata', 'India (IST)'),
+                        ('Asia/Bangkok', 'Bangkok (ICT)'),
+                        ('Asia/Singapore', 'Singapore (SGT)'),
+                        ('Asia/Tokyo', 'Tokyo (JST)'),
+                        ('Asia/Seoul', 'Seoul (KST)'),
+                        ('Asia/Shanghai', 'China (CST)'),
+                        ('Australia/Sydney', 'Sydney (AEDT/AEST)'),
+                        ('Australia/Perth', 'Perth (AWST)'),
+                        ('Pacific/Auckland', 'Auckland (NZST)'),
+                    ]),
+                    ('Africa', [
+                        ('Africa/Johannesburg', 'Johannesburg (SAST)'),
+                        ('Africa/Lagos', 'Lagos (WAT)'),
+                        ('Africa/Nairobi', 'Nairobi (EAT)'),
+                    ]),
+                ] %}
+                {% for group_label, zones in tz_groups %}
+                    <optgroup label="{{ group_label }}">
+                        {% for tz_value, tz_label in zones %}
+                            <option value="{{ tz_value }}" {% if (wedding_config.timezone or 'UTC') == tz_value %}selected{% endif %}>{{ tz_label }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endfor %}
+            </select>
+        </div>
         <div class="fg2">
             <div class="form-group">
                 <label for="venue">Venue Name</label>

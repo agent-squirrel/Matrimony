@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import text
 from dotenv import load_dotenv
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import os
 import random
 import csv
@@ -178,6 +179,8 @@ class WeddingConfig(db.Model):
     photo_challenge_enabled = db.Column(db.Boolean, default=True)
     photo_challenge_unlock_mode = db.Column(db.String(20), default='wedding_day')  # 'wedding_day' or 'custom'
     photo_challenge_unlock_date = db.Column(db.DateTime, nullable=True)
+    # Timezone for unlock/wedding-day comparisons
+    timezone = db.Column(db.String(50), nullable=False, default='UTC')
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -263,6 +266,7 @@ def ensure_wedding_config_columns():
         'photo_challenge_enabled': "ALTER TABLE wedding_config ADD COLUMN photo_challenge_enabled BOOLEAN NOT NULL DEFAULT TRUE",
         'photo_challenge_unlock_mode': "ALTER TABLE wedding_config ADD COLUMN photo_challenge_unlock_mode VARCHAR(20) NOT NULL DEFAULT 'wedding_day'",
         'photo_challenge_unlock_date': "ALTER TABLE wedding_config ADD COLUMN photo_challenge_unlock_date TIMESTAMP",
+        'timezone': "ALTER TABLE wedding_config ADD COLUMN timezone VARCHAR(50) NOT NULL DEFAULT 'UTC'",
         'hero_image_filename': "ALTER TABLE wedding_config ADD COLUMN hero_image_filename VARCHAR(200)",
         'hero_image_overlay_opacity': "ALTER TABLE wedding_config ADD COLUMN hero_image_overlay_opacity FLOAT NOT NULL DEFAULT 0.4",
         'hero_image_blur': "ALTER TABLE wedding_config ADD COLUMN hero_image_blur INT NOT NULL DEFAULT 0",
@@ -500,12 +504,23 @@ def build_wedding_email_template(recipient_name, heading, message_text='', inclu
 
     return html_body
 
+def now_local():
+    """Return the current time as a naive datetime in the configured wedding timezone."""
+    cfg = get_wedding_config()
+    tz_name = (cfg.timezone or 'UTC') if cfg else 'UTC'
+    try:
+        tz = ZoneInfo(tz_name)
+    except Exception:
+        tz = ZoneInfo('UTC')
+    return datetime.now(tz).replace(tzinfo=None)
+
+
 def is_wedding_day():
     """Check if it's the wedding day or after"""
     wed_cfg = get_wedding_config()
     if not wed_cfg or not wed_cfg.wedding_datetime:
         return False
-    return datetime.now() >= wed_cfg.wedding_datetime
+    return now_local() >= wed_cfg.wedding_datetime
 
 
 def get_photo_challenge_unlock_dt():
@@ -522,7 +537,7 @@ def get_photo_challenge_unlock_dt():
 
 def is_photo_challenge_unlocked():
     """Return True if the photo challenge unlock datetime has been reached."""
-    return datetime.now() >= get_photo_challenge_unlock_dt()
+    return now_local() >= get_photo_challenge_unlock_dt()
 
 def get_time_until_wedding():
     """Get time remaining until wedding"""
@@ -1495,7 +1510,14 @@ def admin_wedding_settings():
             # Parse wedding datetime
             if wedding_cfg.wedding_date and wedding_time:
                 wedding_cfg.wedding_datetime = datetime.strptime(f"{wedding_cfg.wedding_date} {wedding_time}", '%Y-%m-%d %H:%M')
-            
+
+            tz_val = request.form.get('timezone', 'UTC').strip()
+            try:
+                ZoneInfo(tz_val)
+                wedding_cfg.timezone = tz_val
+            except Exception:
+                pass
+
             wedding_cfg.venue = request.form.get('venue', wedding_cfg.venue)
             wedding_cfg.city = request.form.get('city', wedding_cfg.city)
             wedding_cfg.ceremony_location = request.form.get('ceremony_location', wedding_cfg.ceremony_location)
