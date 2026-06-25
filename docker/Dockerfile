@@ -9,8 +9,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Uploaded photos and favicons are stored here; mount a volume over this path
-RUN mkdir -p static/uploads/photos static/uploads/favicon
+RUN mkdir -p static/uploads/photos static/uploads/favicon static/uploads/hero
 
 EXPOSE 8000
 
-ENTRYPOINT ["bash", "entrypoint.sh"]
+ENTRYPOINT ["bash", "docker/entrypoint.sh"]

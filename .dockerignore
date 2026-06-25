@@ -12,4 +12,6 @@ docs/
 config.yml
 static/uploads/photos/*
 static/uploads/favicon/*
+static/uploads/hero/*
+docker/docker-compose*.yml
 take_screenshots.py

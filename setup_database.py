@@ -3,11 +3,13 @@
 Database setup script for the wedding website.
 
 Usage:
-  python setup_database.py               # full setup: create DB + user + tables (prompts for root password)
+  python setup_database.py               # full setup: create DB + user + tables
   python setup_database.py --tables-only # create tables only (used by Docker entrypoint)
+
+Reads DB_TYPE (mariadb or postgres), DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME
+from the environment or a .env file.
 """
 
-import pymysql
 import sys
 import os
 import time
@@ -19,10 +21,12 @@ load_dotenv()
 
 
 def _db_params():
-    """Read DB connection params from env vars with sensible defaults."""
+    db_type = os.environ.get('DB_TYPE', 'mariadb').lower()
+    is_pg = db_type in ('postgres', 'postgresql')
     return {
+        'type': 'postgres' if is_pg else 'mariadb',
         'host': os.environ.get('DB_HOST', 'localhost'),
-        'port': int(os.environ.get('DB_PORT', '3306')),
+        'port': int(os.environ.get('DB_PORT', '5432' if is_pg else '3306')),
         'user': os.environ.get('DB_USER', 'wedding_user'),
         'password': os.environ.get('DB_PASS', 'wedding_password'),
         'name': os.environ.get('DB_NAME', 'wedding_db'),
@@ -52,46 +56,96 @@ def create_tables(retries=10, delay=3):
                 return False
 
 
-def setup_database():
-    """Create database and user, then create tables. Requires MySQL root access."""
-    p = _db_params()
+def setup_mariadb(p):
+    """Create MariaDB/MySQL database and user. Requires root access."""
+    import pymysql
 
-    print(f"Setting up MariaDB/MySQL database '{p['name']}' on {p['host']}:{p['port']}")
     root_password = input("Enter MySQL/MariaDB root password: ")
-
     try:
-        connection = pymysql.connect(
-            host=p['host'],
-            port=p['port'],
-            user='root',
-            password=root_password,
+        conn = pymysql.connect(
+            host=p['host'], port=p['port'], user='root', password=root_password,
         )
-        cursor = connection.cursor()
-
-        cursor.execute(
-            f"CREATE DATABASE IF NOT EXISTS `{p['name']}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+        cur = conn.cursor()
+        cur.execute(
+            f"CREATE DATABASE IF NOT EXISTS `{p['name']}` "
+            f"CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
         )
-        cursor.execute(
+        cur.execute(
             f"CREATE USER IF NOT EXISTS '{p['user']}'@'%' IDENTIFIED BY '{p['password']}'"
         )
-        cursor.execute(
-            f"GRANT ALL PRIVILEGES ON `{p['name']}`.* TO '{p['user']}'@'%'"
-        )
-        cursor.execute("FLUSH PRIVILEGES")
-        cursor.close()
-        connection.close()
-
+        cur.execute(f"GRANT ALL PRIVILEGES ON `{p['name']}`.* TO '{p['user']}'@'%'")
+        cur.execute("FLUSH PRIVILEGES")
+        cur.close()
+        conn.close()
         print("Database and user created.")
-
-        if create_tables():
-            print("\nSetup complete.")
-            print("Next: run the app and visit /admin/setup to create your admin account.")
-        else:
-            print("\nDatabase created but table setup failed — check the errors above.")
-
     except pymysql.Error as e:
-        print(f"Database error: {e}")
+        print(f"MariaDB error: {e}")
         sys.exit(1)
+
+
+def setup_postgres(p):
+    """Create PostgreSQL database and user. Requires superuser (postgres) access."""
+    import psycopg2
+    from psycopg2 import sql
+
+    superuser_pass = input("Enter PostgreSQL superuser (postgres) password: ")
+    try:
+        conn = psycopg2.connect(
+            host=p['host'], port=p['port'],
+            user='postgres', password=superuser_pass,
+            dbname='postgres',
+        )
+        conn.autocommit = True
+        cur = conn.cursor()
+
+        cur.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (p['user'],))
+        if cur.fetchone():
+            print(f"User '{p['user']}' already exists.")
+        else:
+            cur.execute(
+                sql.SQL("CREATE USER {} WITH PASSWORD %s").format(sql.Identifier(p['user'])),
+                (p['password'],),
+            )
+            print(f"User '{p['user']}' created.")
+
+        cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (p['name'],))
+        if cur.fetchone():
+            print(f"Database '{p['name']}' already exists.")
+        else:
+            cur.execute(
+                sql.SQL("CREATE DATABASE {} OWNER {}").format(
+                    sql.Identifier(p['name']), sql.Identifier(p['user'])
+                )
+            )
+            print(f"Database '{p['name']}' created.")
+
+        cur.execute(
+            sql.SQL("GRANT ALL PRIVILEGES ON DATABASE {} TO {}").format(
+                sql.Identifier(p['name']), sql.Identifier(p['user'])
+            )
+        )
+        cur.close()
+        conn.close()
+        print("Database and user configured.")
+    except psycopg2.Error as e:
+        print(f"PostgreSQL error: {e}")
+        sys.exit(1)
+
+
+def setup_database():
+    p = _db_params()
+    print(f"Setting up {p['type']} database '{p['name']}' on {p['host']}:{p['port']}")
+
+    if p['type'] == 'postgres':
+        setup_postgres(p)
+    else:
+        setup_mariadb(p)
+
+    if create_tables():
+        print("\nSetup complete.")
+        print("Next: run the app and visit /admin/setup to create your admin account.")
+    else:
+        print("\nDatabase created but table setup failed — check the errors above.")
 
 
 if __name__ == '__main__':

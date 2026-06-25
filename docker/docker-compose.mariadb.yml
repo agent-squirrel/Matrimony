@@ -1,10 +1,13 @@
 services:
   app:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     ports:
       - "${APP_PORT:-8000}:8000"
     environment:
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in your .env file}
+      DB_TYPE: mariadb
       DB_HOST: db
       DB_PORT: 3306
       DB_USER: ${DB_USER:-wedding_user}

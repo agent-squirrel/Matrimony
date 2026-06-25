@@ -33,11 +33,15 @@ def _build_db_url():
         if url.startswith('mysql://'):
             return url.replace('mysql://', 'mysql+pymysql://', 1)
         return url
+    db_type = os.environ.get('DB_TYPE', 'mariadb').lower()
     host = os.environ.get('DB_HOST', 'localhost')
-    port = os.environ.get('DB_PORT', '3306')
     user = os.environ.get('DB_USER', 'wedding_user')
     password = os.environ.get('DB_PASS', 'wedding_password')
     name = os.environ.get('DB_NAME', 'wedding_db')
+    if db_type in ('postgres', 'postgresql'):
+        port = os.environ.get('DB_PORT', '5432')
+        return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
+    port = os.environ.get('DB_PORT', '3306')
     return f"mysql+pymysql://{user}:{password}@{host}:{port}/{name}"
 
 _secret_key = os.environ.get('SECRET_KEY', '')
@@ -226,6 +230,16 @@ class RSVPSubmission(db.Model):
 
 def ensure_wedding_config_columns():
     """Add missing WeddingConfig columns for environments without migrations."""
+    from sqlalchemy import inspect as sa_inspect
+    try:
+        existing = {col['name'] for col in sa_inspect(db.engine).get_columns('wedding_config')}
+    except Exception:
+        return  # table doesn't exist yet; db.create_all() above handles initial creation
+
+    dialect = db.engine.dialect.name  # 'mysql' | 'postgresql'
+    double_t = 'DOUBLE PRECISION' if dialect == 'postgresql' else 'DOUBLE'
+    datetime_t = 'TIMESTAMP' if dialect == 'postgresql' else 'DATETIME'
+
     alter_statements = {
         'primary_text_color': "ALTER TABLE wedding_config ADD COLUMN primary_text_color VARCHAR(7) NOT NULL DEFAULT '#F5F1EE'",
         'nav_text_color': "ALTER TABLE wedding_config ADD COLUMN nav_text_color VARCHAR(7) NOT NULL DEFAULT '#3F3631'",
@@ -251,15 +265,15 @@ def ensure_wedding_config_columns():
         'mail_sender_email': "ALTER TABLE wedding_config ADD COLUMN mail_sender_email VARCHAR(200)",
         'favicon_filename': "ALTER TABLE wedding_config ADD COLUMN favicon_filename VARCHAR(200)",
         'after_party_time': "ALTER TABLE wedding_config ADD COLUMN after_party_time VARCHAR(50)",
-        'ceremony_lat': "ALTER TABLE wedding_config ADD COLUMN ceremony_lat DOUBLE",
-        'ceremony_lng': "ALTER TABLE wedding_config ADD COLUMN ceremony_lng DOUBLE",
-        'reception_lat': "ALTER TABLE wedding_config ADD COLUMN reception_lat DOUBLE",
-        'reception_lng': "ALTER TABLE wedding_config ADD COLUMN reception_lng DOUBLE",
-        'after_party_lat': "ALTER TABLE wedding_config ADD COLUMN after_party_lat DOUBLE",
-        'after_party_lng': "ALTER TABLE wedding_config ADD COLUMN after_party_lng DOUBLE",
+        'ceremony_lat': f"ALTER TABLE wedding_config ADD COLUMN ceremony_lat {double_t}",
+        'ceremony_lng': f"ALTER TABLE wedding_config ADD COLUMN ceremony_lng {double_t}",
+        'reception_lat': f"ALTER TABLE wedding_config ADD COLUMN reception_lat {double_t}",
+        'reception_lng': f"ALTER TABLE wedding_config ADD COLUMN reception_lng {double_t}",
+        'after_party_lat': f"ALTER TABLE wedding_config ADD COLUMN after_party_lat {double_t}",
+        'after_party_lng': f"ALTER TABLE wedding_config ADD COLUMN after_party_lng {double_t}",
         'photo_challenge_enabled': "ALTER TABLE wedding_config ADD COLUMN photo_challenge_enabled BOOLEAN NOT NULL DEFAULT TRUE",
         'photo_challenge_unlock_mode': "ALTER TABLE wedding_config ADD COLUMN photo_challenge_unlock_mode VARCHAR(20) NOT NULL DEFAULT 'wedding_day'",
-        'photo_challenge_unlock_date': "ALTER TABLE wedding_config ADD COLUMN photo_challenge_unlock_date DATETIME",
+        'photo_challenge_unlock_date': f"ALTER TABLE wedding_config ADD COLUMN photo_challenge_unlock_date {datetime_t}",
         'hero_image_filename': "ALTER TABLE wedding_config ADD COLUMN hero_image_filename VARCHAR(200)",
         'hero_image_overlay_opacity': "ALTER TABLE wedding_config ADD COLUMN hero_image_overlay_opacity FLOAT NOT NULL DEFAULT 0.4",
         'hero_image_blur': "ALTER TABLE wedding_config ADD COLUMN hero_image_blur INT NOT NULL DEFAULT 0",
@@ -268,10 +282,6 @@ def ensure_wedding_config_columns():
     }
 
     with db.engine.connect() as connection:
-        existing = {
-            row[0]
-            for row in connection.execute(text("SHOW COLUMNS FROM wedding_config"))
-        }
         for column_name, alter_sql in alter_statements.items():
             if column_name not in existing:
                 connection.execute(text(alter_sql))

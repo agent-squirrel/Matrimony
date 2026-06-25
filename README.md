@@ -39,38 +39,49 @@ A beautiful, easy-to-deploy wedding website for you and your partner. Guests can
 
 ### Option 1 - Render (free, one-click)
 
-Render hosts the app and provisions a free PostgreSQL database automatically. No config needed — just connect your GitHub account.
+Render hosts the app and provisions a free PostgreSQL database automatically. No config needed - just connect your GitHub account.
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/YOUR_USERNAME/YOUR_REPO)
 
-> **Before clicking:** push this repo to GitHub, then replace `YOUR_USERNAME/YOUR_REPO` in the badge link above with your actual GitHub path. Render reads `render.yaml` from the repo and sets everything up automatically — including the database and a random `SECRET_KEY`.
+> **Before clicking:** push this repo to GitHub, then replace `YOUR_USERNAME/YOUR_REPO` in the badge link above with your actual GitHub path. Render reads `render.yaml` from the repo and sets everything up automatically - including the database and a random `SECRET_KEY`.
 
 > **Note on photo uploads:** Render's free web service uses ephemeral storage, so uploaded photos won't survive a restart. This is fine for trying things out; for a real wedding event use the Docker option below or upgrade to a Render paid plan with a persistent disk.
 
 ### Option 2 - Docker
 
-Spins up the app and a MariaDB container together. Requires [Docker](https://docs.docker.com/get-docker/) and Docker Compose.
+Docker files live in the [`docker/`](docker/) directory. Requires [Docker](https://docs.docker.com/get-docker/) and Docker Compose.
+
+**With MariaDB (default)**
 
 ```bash
 cp .env.example .env
 # Open .env and set SECRET_KEY to a long random string.
 # The database is handled for you - no other changes needed.
 
-docker compose up -d
+docker compose -f docker/docker-compose.mariadb.yml up -d
+```
+
+**With PostgreSQL**
+
+```bash
+cp .env.example .env
+# Set SECRET_KEY in .env.
+
+docker compose -f docker/docker-compose.postgres.yml up -d
 ```
 
 Open `http://localhost:8000` in your browser. On first run you'll be walked through a short setup wizard.
 
-**Using your own existing database?** Use the alternative compose file instead:
+**Using your own existing database?** Use the external-db compose file instead:
 
 ```bash
-# Fill in DB_HOST, DB_USER, DB_PASS, DB_NAME (and optionally DATABASE_URL) in your .env
-docker compose -f docker-compose.external-db.yml up -d
+# Fill in DB_TYPE, DB_HOST, DB_USER, DB_PASS, DB_NAME (and optionally DATABASE_URL) in .env
+docker compose -f docker/docker-compose.external-db.yml up -d
 ```
 
 ### Option 3 - Manual / venv (self-hosted)
 
-For running directly on a server or your local machine with an existing MariaDB/MySQL instance.
+For running directly on a server or your local machine with an existing MariaDB or PostgreSQL instance.
 
 **1. Create a virtual environment**
 
@@ -93,11 +104,12 @@ cp .env.example .env
 
 Open `.env` and fill in:
 - `SECRET_KEY` - any long random string (generate one with `python3 -c "import secrets; print(secrets.token_hex(32))"`)
+- `DB_TYPE` - `mariadb` or `postgres`
 - `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME` - your database connection details
 
 **4. Set up the database**
 
-If you need to create the database and user from scratch:
+If you need to create the database and user from scratch (prompts for the root/superuser password):
 
 ```bash
 python setup_database.py
@@ -141,7 +153,7 @@ Once you're set up, log in at `/admin` to manage everything from the browser - n
 ## Tech Stack
 
 - **Backend:** Flask, Flask-Mail, Flask-SQLAlchemy
-- **Database:** MariaDB/MySQL
+- **Database:** MariaDB/MySQL or PostgreSQL
 - **Frontend:** Jinja2 templates, custom CSS, vanilla JavaScript
 
 ---

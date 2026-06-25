@@ -2,7 +2,7 @@ services:
   - type: web
     name: matrimony
     env: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./docker/Dockerfile
     envVars:
       - key: SECRET_KEY
         generateValue: true
